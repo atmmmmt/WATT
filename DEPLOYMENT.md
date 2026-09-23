@@ -10,9 +10,7 @@
 - Node.js `20+` (Node.js 22 LTS is recommended for the server).
 - MongoDB.
 - PM2 and Nginx/reverse proxy in production.
-- Chromium/Puppeteer is no longer required by the active WhatsApp transport. The platform uses Baileys WebSocket sessions and stores Baileys credentials/Signal keys in MongoDB.
-
-> The legacy `whatsapp-web.js` package is still present temporarily because the old service file remains in the repository for rollback/type compatibility, but it is not the provider injected by `WhatsappSessionsModule`.
+- Chromium/Puppeteer is not required. The active WhatsApp transport uses Baileys WebSocket sessions and stores Baileys credentials/Signal keys in MongoDB.
 
 ## Local vs production
 
