@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ProviderType } from '../providers/schemas/provider-account.schema';
 import { WhatsappSessionStatus } from './schemas/whatsapp-session.schema';
 
 export interface IncomingWhatsappMessageEvent {
@@ -77,6 +78,11 @@ export interface WhatsappChatHistorySnapshot {
 
 type AsyncListener<T> = (event: T) => Promise<void> | void;
 
+type ProviderSendResult = {
+  providerType: ProviderType;
+  providerMessageId: string;
+};
+
 /**
  * Stable application contract for WhatsApp sessions.
  *
@@ -113,14 +119,14 @@ export abstract class WhatsappSessionsService {
     phoneNumber: string,
     code: string,
     minutes: number,
-  ): Promise<{ providerType: string; providerMessageId: string }>;
+  ): Promise<ProviderSendResult>;
 
   abstract sendTextMessage(
     tenantId: string,
     chatIdOrPhone: string,
     message: string,
     options?: { quotedMessageId?: string },
-  ): Promise<{ providerType: string; providerMessageId: string }>;
+  ): Promise<ProviderSendResult>;
 
   abstract sendMediaMessage(
     tenantId: string,
@@ -129,7 +135,7 @@ export abstract class WhatsappSessionsService {
     mimetype: string,
     filename: string,
     caption?: string,
-  ): Promise<{ providerType: string; providerMessageId: string }>;
+  ): Promise<ProviderSendResult>;
 
   abstract resolveChatId(tenantId: string, phoneNumber: string): Promise<string>;
   abstract resolveContactPhone(
