@@ -1,0 +1,22 @@
+﻿# Single-page app: every route falls back to index.html so deep links work
+# (e.g. /support/inbox or /ar) instead of returning 404.
+RewriteEngine On
+
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+RewriteRule ^ index.html [L]
+
+# Hashed assets never change: cache them hard. index.html must not be cached.
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/webp "access plus 1 year"
+  ExpiresByType image/png "access plus 1 year"
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+</IfModule>
+
+<FilesMatch "index\.html$">
+  Header set Cache-Control "no-cache, must-revalidate"
+</FilesMatch>

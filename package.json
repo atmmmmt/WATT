@@ -1,0 +1,19 @@
+{
+  "name": "whatsapp-otp-platform",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/api",
+    "apps/dashboard",
+    "frontend"
+  ],
+  "scripts": {
+    "dev:api": "npm run start:dev --workspace @waotp/api",
+    "dev:dashboard": "npm run dev --workspace @waotp/dashboard",
+    "dev:frontend": "npm run dev --workspace @waotp/frontend",
+    "build:frontend": "npm run build --workspace @waotp/frontend",
+    "build": "npm run build --workspace @waotp/api && npm run build --workspace @waotp/dashboard && npm run build --workspace @waotp/frontend",
+    "seed:admin": "npm run seed:admin --workspace @waotp/api",
+    "seed:support-demo": "npm run seed:support-demo --workspace @waotp/api"
+  }
+}

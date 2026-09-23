@@ -1,0 +1,33 @@
+node_modules
+dist
+.DS_Store
+coverage
+
+# Secrets — never commit these (the API .env holds the database credentials)
+.env
+.env.local
+apps/api/.env
+apps/dashboard/.env
+frontend/.env
+
+# WhatsApp session data and uploaded media live on the server only
+.wwebjs_auth
+.wwebjs_cache
+apps/api/uploads
+apps/api/.wwebjs_auth
+apps/api/.wwebjs_cache
+
+# Local build/deploy artefacts
+tmp
+*.tar.gz
+*.zip
+*.log
+
+# Build output
+dist-server
+apps/api/dist
+apps/dashboard/dist
+frontend/dist
+
+# Internal business documents (not part of the product)
+*.pdf
