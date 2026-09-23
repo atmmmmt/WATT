@@ -4,6 +4,7 @@ import { ApiKeysModule } from '../api-keys/api-keys.module';
 import { ProvidersModule } from '../providers/providers.module';
 import { ClientWhatsappSessionsController } from './client-whatsapp-sessions.controller';
 import { ClientWhatsappSendController } from './client-whatsapp-send.controller';
+import { BaileysWhatsappCompatService } from './baileys-whatsapp-compat.service';
 import { BaileysWhatsappSessionsService } from './baileys-whatsapp-sessions.service';
 import {
   WhatsappBaileysAuth,
@@ -32,9 +33,10 @@ import { WhatsappSessionsService } from './whatsapp-sessions.service';
   ],
   providers: [
     BaileysWhatsappSessionsService,
+    BaileysWhatsappCompatService,
     {
       provide: WhatsappSessionsService,
-      useExisting: BaileysWhatsappSessionsService,
+      useExisting: BaileysWhatsappCompatService,
     },
   ],
   exports: [WhatsappSessionsService, MongooseModule],
