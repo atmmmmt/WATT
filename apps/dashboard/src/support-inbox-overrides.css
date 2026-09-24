@@ -126,6 +126,7 @@
     border: 0 !important;
     border-radius: 0 !important;
     background: #fff !important;
+    position: relative !important;
   }
 
   .inbox-container[data-mv="list"] {
@@ -134,6 +135,7 @@
 
   .inbox-aside,
   .inbox-main {
+    position: absolute !important;
     inset: 0 !important;
     width: 100% !important;
     max-width: none !important;
@@ -142,8 +144,28 @@
     border-radius: 0 !important;
   }
 
+  /* These !important declarations are required because both panes have inline display:flex. */
+  .inbox-container[data-mv="list"] .inbox-aside {
+    display: flex !important;
+    z-index: 3 !important;
+  }
+
+  .inbox-container[data-mv="list"] .inbox-main {
+    display: none !important;
+  }
+
+  .inbox-container[data-mv="thread"] .inbox-aside {
+    display: none !important;
+  }
+
+  .inbox-container[data-mv="thread"] .inbox-main {
+    display: flex !important;
+    z-index: 4 !important;
+  }
+
   .inbox-aside {
     background: #fff !important;
+    min-width: 0 !important;
   }
 
   .inbox-aside > div:first-child {
@@ -152,6 +174,11 @@
     position: sticky;
     top: 0;
     z-index: 5;
+  }
+
+  .inbox-aside > div:last-child {
+    min-height: 0;
+    background: #fff;
   }
 
   .conv-item {
