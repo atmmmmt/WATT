@@ -149,7 +149,8 @@ const brand = {
 function assets(origin: string) {
   return {
     logo: `${origin}/brand/vayro-logo-white.png`,
-    mascot: `${origin}/mascot/celebrate.webp`,
+    // front.webp is the larger clean master asset; celebrate.webp was too small for email clients.
+    mascot: `${origin}/mascot/front.webp`,
   };
 }
 
@@ -158,19 +159,17 @@ function shell(content: string, origin: string, eyebrow: string) {
   return `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#f3f7f5;font-family:Tahoma,Arial,sans-serif;color:${brand.text};">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f7f5;padding:28px 12px;">
+<body style="margin:0;padding:0;background:#f2f6f4;font-family:Tahoma,Arial,sans-serif;color:${brand.text};">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f2f6f4;padding:28px 12px;">
     <tr><td align="center">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;background:#ffffff;border-radius:22px;overflow:hidden;border:1px solid #dfeae6;box-shadow:0 10px 32px rgba(7,89,70,.08);">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;background:#ffffff;border-radius:24px;overflow:hidden;border:1px solid #dfeae6;box-shadow:0 12px 34px rgba(7,89,70,.09);">
         <tr>
-          <td style="background:${brand.green};padding:26px 30px;">
-            <table role="presentation" width="100%"><tr>
-              <td align="right" valign="middle"><img src="${media.logo}" alt="VAYRO" width="132" style="display:block;max-width:132px;height:auto;"></td>
-              <td align="left" valign="middle" style="color:#d5ebe4;font-size:12px;font-weight:700;letter-spacing:.4px;">${eyebrow}</td>
-            </tr></table>
+          <td align="center" style="background:${brand.green};padding:24px 24px 22px;">
+            <img src="${media.logo}" alt="VAYRO" width="142" style="display:block;max-width:142px;height:auto;margin:0 auto;">
+            <div style="display:inline-block;margin-top:12px;padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.12);color:#d9eee8;font-size:10px;font-weight:700;letter-spacing:.8px;">${eyebrow}</div>
           </td>
         </tr>
-        ${content.replace('{{MASCOT}}', `<img src="${media.mascot}" alt="VAYRO" width="112" style="display:block;margin:0 auto 12px;max-width:112px;height:auto;">`)}
+        ${content.replace('{{MASCOT}}', `<div style="width:132px;height:132px;margin:0 auto 12px;border-radius:30px;background:#ffffff;display:flex;align-items:center;justify-content:center;overflow:hidden;"><img src="${media.mascot}" alt="VAYRO" width="124" height="124" style="display:block;width:124px;height:124px;object-fit:contain;border:0;outline:0;background:#ffffff;"></div>`)}
         <tr><td style="padding:0 34px 30px;">
           <div style="height:1px;background:#e7efec;margin:4px 0 18px;"></div>
           <p style="margin:0;color:${brand.muted};font-size:12px;line-height:1.8;text-align:center;">هذه رسالة آلية من VAYRO. لا تشارك رابط تفعيل حسابك مع أي شخص.</p>
@@ -200,9 +199,10 @@ function buildInviteEmail(opts: { name: string; companyName: string; setPassword
 
 function buildResetEmail(opts: { name: string; resetUrl: string }, origin: string) {
   return shell(`
-    <tr><td style="padding:34px 34px 14px;text-align:center;">
+    <tr><td style="padding:32px 34px 14px;text-align:center;">
       {{MASCOT}}
-      <h1 style="margin:8px 0 10px;font-size:25px;">إعادة تعيين كلمة المرور</h1>
+      <div style="display:inline-block;background:${brand.mint};color:${brand.green};font-size:12px;font-weight:700;padding:7px 12px;border-radius:999px;">أمان الحساب</div>
+      <h1 style="margin:15px 0 10px;font-size:25px;line-height:1.5;">إعادة تعيين كلمة المرور</h1>
       <p style="margin:0;color:${brand.muted};font-size:14px;line-height:1.9;">مرحباً ${opts.name}، وصلنا طلب لإعادة تعيين كلمة مرور حسابك في VAYRO. استخدم الزر التالي لإنشاء كلمة مرور جديدة.</p>
       ${actionButton(opts.resetUrl, 'إنشاء كلمة مرور جديدة')}
       <div style="background:#f7faf9;border:1px solid #e5eeeb;border-radius:12px;padding:13px 16px;color:${brand.muted};font-size:12px;line-height:1.8;">الرابط صالح لمدة ساعة واحدة. إذا لم تطلب إعادة التعيين، تجاهل هذه الرسالة.</div>
