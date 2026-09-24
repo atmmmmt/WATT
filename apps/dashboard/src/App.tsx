@@ -12,6 +12,7 @@ import { LoginPage } from './pages/LoginPage';
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })));
 const SetPasswordPage = lazy(() => import('./pages/SetPasswordPage').then(m => ({ default: m.SetPasswordPage })));
 const DashboardPage = lazy(() => import('./pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
+const ServerStatusPage = lazy(() => import('./pages/ServerStatusPage').then(m => ({ default: m.ServerStatusPage })));
 const OtpLogsPage = lazy(() => import('./pages/OtpLogsPage').then(m => ({ default: m.OtpLogsPage })));
 const HrOverviewPage = lazy(() => import('./pages/HrOverviewPage').then(m => ({ default: m.HrOverviewPage })));
 const HrJobsPage = lazy(() => import('./pages/HrJobsPage').then(m => ({ default: m.HrJobsPage })));
@@ -72,7 +73,6 @@ function HomePage() {
   return <DashboardPage />;
 }
 
-
 /** Page-to-page transition: a short fade + lift, like a native app pushing a screen. */
 function RouteTransition({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -105,6 +105,7 @@ function AppShell() {
         <RouteTransition>
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/server-status" element={<ServerStatusPage />} />
           <Route path="/tenants" element={<TenantsPage />} />
           <Route path="/packages" element={<PackagesPage />} />
           <Route path="/finance" element={<FinancePage />} />
