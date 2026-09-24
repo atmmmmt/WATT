@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Bell, BellRing, ChevronRight, Download, ShieldCheck, Sparkles, WifiOff, X } from 'lucide-react';
+import { Bell, BellRing, ChevronRight, Download, MessageCircle, ShieldCheck, Sparkles, WifiOff, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { createSupportSocket } from '../lib/support-socket';
 import { Mascot } from './Mascot';
 import {
   canInstallApp,
@@ -14,6 +15,7 @@ import {
 import { haptic } from '../lib/mobile';
 
 type NotificationPermissionState = NotificationPermission | 'unsupported';
+type LiveNotice = { title: string; body: string } | null;
 
 function isPhoneViewport() {
   return typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches;
@@ -33,7 +35,7 @@ function notificationState(): NotificationPermissionState {
 }
 
 export function MobileExperience() {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [mobile, setMobile] = useState(isPhoneViewport);
@@ -43,10 +45,11 @@ export function MobileExperience() {
   const [canInstall, setCanInstall] = useState(canInstallApp());
   const [topbarBrand, setTopbarBrand] = useState<HTMLElement | null>(null);
   const [topbarActions, setTopbarActions] = useState<HTMLElement | null>(null);
+  const [liveNotice, setLiveNotice] = useState<LiveNotice>(null);
   const installed = isStandalone();
   const iosSafari = isIosSafari();
 
-  const userKey = String((user as any)?.id || (user as any)?._id || user?.email || user?.name || 'user');
+  const userKey = String(user?.id || user?.email || user?.name || 'user');
   const welcomeKey = `vayro-mobile-welcome-v3:${userKey}`;
 
   useEffect(() => {
@@ -122,6 +125,51 @@ export function MobileExperience() {
     return () => window.clearTimeout(id);
   }, [user]);
 
+  // Keep support notifications alive even while the user is on another VAYRO page.
+  // The inbox itself already owns a realtime socket, so skip this listener there to avoid
+  // duplicate OS notifications and duplicate sounds.
+  useEffect(() => {
+    if (!token || !user || location.pathname.startsWith('/support/inbox')) return;
+    const products = user.enabledProducts || [];
+    const supportRoles = ['super_admin', 'tenant_admin', 'admin', 'supervisor', 'agent'];
+    const hasSupport = user.role === 'super_admin' || products.includes('support');
+    if (!hasSupport || !supportRoles.includes(user.role)) return;
+
+    const socket = createSupportSocket(token);
+    let toastTimer: number | null = null;
+
+    socket.on('message:new', (payload: any) => {
+      if (payload?.message?.direction !== 'incoming') return;
+      const body = String(payload?.message?.body || 'وصلت رسالة واتساب جديدة').slice(0, 120);
+      const title = 'رسالة جديدة في VAYRO';
+      haptic([10, 35, 10]);
+
+      if (document.hidden && 'Notification' in window && Notification.permission === 'granted' && 'serviceWorker' in navigator) {
+        navigator.serviceWorker.ready
+          .then((registration) => registration.showNotification(title, {
+            body,
+            icon: '/icons/icon-192.png',
+            badge: '/icons/icon-192.png',
+            tag: `vayro-message-${payload?.conversationId || 'new'}`,
+            data: { url: '/support/inbox' },
+            dir: 'rtl',
+            lang: 'ar',
+          }))
+          .catch(() => {});
+        return;
+      }
+
+      setLiveNotice({ title, body });
+      if (toastTimer) window.clearTimeout(toastTimer);
+      toastTimer = window.setTimeout(() => setLiveNotice(null), 5200);
+    });
+
+    return () => {
+      if (toastTimer) window.clearTimeout(toastTimer);
+      socket.disconnect();
+    };
+  }, [token, user, location.pathname]);
+
   const mainPaths = useMemo(() => new Set([
     '/', '/home', '/support/inbox', '/hr', '/hr/inbox', '/tenants', '/otp-logs',
     '/support/reports', '/finance', '/doctor-relay/links',
@@ -158,11 +206,7 @@ export function MobileExperience() {
 
   const installApp = async () => {
     haptic();
-    if (iosSafari) {
-      // SidebarLayout already owns the detailed iOS install sheet. The onboarding text
-      // below explains the same native Share → Add to Home Screen path without fake UI.
-      return;
-    }
+    if (iosSafari) return;
     await promptInstall();
     setCanInstall(canInstallApp());
   };
@@ -200,6 +244,19 @@ export function MobileExperience() {
       )}
 
       {topbarActions && notificationButton && createPortal(notificationButton, topbarActions)}
+
+      {liveNotice && createPortal(
+        <button
+          className="vayro-live-notice"
+          onClick={() => { setLiveNotice(null); navigate('/support/inbox'); }}
+          aria-label="فتح الرسالة الجديدة"
+        >
+          <span className="vayro-live-notice-icon"><MessageCircle size={19} /></span>
+          <span className="vayro-live-notice-copy"><strong>{liveNotice.title}</strong><small>{liveNotice.body}</small></span>
+          <ChevronRight size={18} />
+        </button>,
+        document.body,
+      )}
 
       {welcomeOpen && mobile && createPortal(
         <div className="mobile-welcome-overlay" role="dialog" aria-modal="true" aria-label="مرحباً بك في VAYRO">
