@@ -1,6 +1,8 @@
-import { lazy, Suspense } from 'react';
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { BrowserRouter, Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { Server } from 'lucide-react';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { SidebarLayout } from './components/SidebarLayout';
 import { useAuth } from './context/AuthContext';
@@ -73,6 +75,49 @@ function HomePage() {
   return <DashboardPage />;
 }
 
+/**
+ * Keep infrastructure navigation owned by the routed shell instead of by a
+ * one-off server patch. This intentionally portals into the existing sidebar
+ * nav so the entry survives every production rebuild / auto deploy.
+ */
+function ServerStatusSidebarLink() {
+  const { user } = useAuth();
+  const [target, setTarget] = useState<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (user?.role !== 'super_admin') {
+      setTarget(null);
+      return;
+    }
+
+    let cancelled = false;
+    const findNav = () => {
+      if (cancelled) return;
+      const nav = document.querySelector<HTMLElement>('.sidebar .nav-group');
+      if (nav) setTarget(nav);
+      else window.requestAnimationFrame(findNav);
+    };
+    findNav();
+    return () => { cancelled = true; };
+  }, [user?.role]);
+
+  if (user?.role !== 'super_admin' || !target) return null;
+
+  return createPortal(
+    <div data-vayro-server-status-nav="true">
+      <div className="nav-group-label">النظام</div>
+      <NavLink
+        to="/server-status"
+        className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
+      >
+        <Server size={18} />
+        <span>حالة السيرفر</span>
+      </NavLink>
+    </div>,
+    target,
+  );
+}
+
 /** Page-to-page transition: a short fade + lift, like a native app pushing a screen. */
 function RouteTransition({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -101,6 +146,7 @@ function RouteTransition({ children }: { children: React.ReactNode }) {
 function AppShell() {
   return (
     <SidebarLayout>
+      <ServerStatusSidebarLink />
       <Suspense fallback={<PageLoader />}>
         <RouteTransition>
         <Routes>
