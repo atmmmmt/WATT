@@ -6,6 +6,7 @@ import { Server } from 'lucide-react';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { SidebarLayout } from './components/SidebarLayout';
 import { MobileExperience } from './components/MobileExperience';
+import { ResponsiveRouteBridge } from './components/ResponsiveRouteBridge';
 import { useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/LoginPage';
 
@@ -148,6 +149,7 @@ function AppShell() {
   return (
     <SidebarLayout>
       <MobileExperience />
+      <ResponsiveRouteBridge />
       <ServerStatusSidebarLink />
       <Suspense fallback={<PageLoader />}>
         <RouteTransition>
