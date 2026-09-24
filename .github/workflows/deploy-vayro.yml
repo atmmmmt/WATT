@@ -1,5 +1,6 @@
 name: Deploy VAYRO Production
 
+# Auto-deploy trigger verified after production SSH secrets setup.
 on:
   push:
     branches:
