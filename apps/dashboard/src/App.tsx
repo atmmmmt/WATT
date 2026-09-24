@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Server } from 'lucide-react';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { SidebarLayout } from './components/SidebarLayout';
+import { MobileExperience } from './components/MobileExperience';
 import { useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/LoginPage';
 
@@ -146,6 +147,7 @@ function RouteTransition({ children }: { children: React.ReactNode }) {
 function AppShell() {
   return (
     <SidebarLayout>
+      <MobileExperience />
       <ServerStatusSidebarLink />
       <Suspense fallback={<PageLoader />}>
         <RouteTransition>
