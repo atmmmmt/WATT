@@ -64,7 +64,12 @@ jobs:
           cp -a frontend/dist/. /var/www/vayro-landing/
           chown -R www-data:www-data /var/www/vayro-dashboard /var/www/vayro-landing
 
-          echo "==> Restart API"
+          echo "==> Load production secrets and restart API"
+          if [ -f /etc/vayro/production-secrets.env ]; then
+            set -a
+            . /etc/vayro/production-secrets.env
+            set +a
+          fi
           pm2 restart vayro-api --update-env
           pm2 save
 
