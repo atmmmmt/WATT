@@ -17,6 +17,7 @@ import {
   MessageSquare,
   Briefcase,
   ShieldCheck,
+  KeyRound,
   X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -199,6 +200,7 @@ export function TenantsPage() {
   const [search, setSearch] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [resettingTenantId, setResettingTenantId] = useState<string | null>(null);
   const [editingProductsTenant, setEditingProductsTenant] = useState<Tenant | null>(null);
   const [editingProductsSelection, setEditingProductsSelection] = useState<TenantProduct[]>([]);
   const [savingProducts, setSavingProducts] = useState(false);
@@ -433,6 +435,33 @@ export function TenantsPage() {
     }
   }
 
+  async function handleSendPasswordReset(tenant: Tenant) {
+    if (!token) return;
+    const tenantId = tenant.id || tenant._id || '';
+    if (!tenantId) return;
+
+    const confirmed = window.confirm(
+      `سيتم إرسال رابط آمن لإعادة تعيين كلمة المرور إلى مدير العميل "${tenant.name}". هل تريد المتابعة؟`,
+    );
+    if (!confirmed) return;
+
+    setResettingTenantId(tenantId);
+    try {
+      const result = await apiRequest<{ success: boolean; email: string }>(
+        `/tenants/${tenantId}/send-password-reset`,
+        { method: 'POST' },
+        token,
+      );
+      alert(`تم إرسال رابط إعادة تعيين كلمة المرور إلى ${result.email}`);
+    } catch (error) {
+      alert(
+        `تعذر إرسال رابط إعادة التعيين: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`,
+      );
+    } finally {
+      setResettingTenantId(null);
+    }
+  }
+
   async function handleDeleteTenant(tenant: Tenant) {
     if (!token) return;
     const tenantId = tenant.id || tenant._id;
@@ -575,6 +604,8 @@ export function TenantsPage() {
         {loading ? <p>جاري التحميل...</p> : filteredTenants.map((tenant, index) => {
           const connectionStatus = getConnectionStatus(tenant);
           const products = tenant.enabledProducts || [];
+          const tenantId = tenant.id || tenant._id || '';
+          const resettingPassword = resettingTenantId === tenantId;
           return (
             <motion.div
               key={tenant.id || tenant._id}
@@ -628,7 +659,17 @@ export function TenantsPage() {
                   </div>
                 </div>
 
-                <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem' }}>
+                <button
+                  className="btn-secondary"
+                  style={{ width: '100%', fontSize: '0.8rem', marginTop: '0.35rem' }}
+                  onClick={() => handleSendPasswordReset(tenant)}
+                  disabled={resettingPassword}
+                >
+                  <KeyRound size={16} />
+                  {resettingPassword ? 'جاري إرسال الرابط...' : 'إرسال إعادة تعيين كلمة المرور'}
+                </button>
+
+                <div style={{ marginTop: '0.25rem', display: 'flex', gap: '0.5rem' }}>
                   <button className="btn-secondary" style={{ flex: 1, fontSize: '0.8rem' }} onClick={() => handleDownloadGuides(tenant)}>
                     <FileText size={16} /> ملفات الإعداد والدليل
                   </button>
