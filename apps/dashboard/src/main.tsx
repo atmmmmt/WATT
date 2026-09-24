@@ -7,6 +7,7 @@ import './support-inbox-overrides.css';
 import './mobile-native.css';
 import './mobile-premium.css';
 import './mobile-route-fixes.css';
+import './motion-system.css';
 
 registerPwa();
 
