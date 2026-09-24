@@ -13,3 +13,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <App />
   </AuthProvider>,
 );
+
+requestAnimationFrame(() => {
+  const splash = document.getElementById('vayro-boot-splash');
+  if (!splash) return;
+  splash.classList.add('is-ready');
+  window.setTimeout(() => splash.remove(), 220);
+});
