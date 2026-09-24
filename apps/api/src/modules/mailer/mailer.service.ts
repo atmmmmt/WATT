@@ -6,18 +6,30 @@ import * as nodemailer from 'nodemailer';
 export class MailerService {
   private readonly logger = new Logger(MailerService.name);
   private transporter: nodemailer.Transporter | null = null;
+  private readonly resendApiKey: string;
 
   constructor(private readonly configService: ConfigService) {
+    const resend = this.configService.get<any>('resend');
+    this.resendApiKey = String(resend?.apiKey || '').trim();
+
     const smtp = this.configService.get<any>('smtp');
-    if (smtp?.host && smtp?.user && smtp?.pass) {
+    if (!this.resendApiKey && smtp?.host && smtp?.user && smtp?.pass) {
       this.transporter = nodemailer.createTransport({
         host: smtp.host,
         port: smtp.port,
         secure: smtp.secure,
         auth: { user: smtp.user, pass: smtp.pass },
       });
+    }
+
+    if (this.resendApiKey) {
+      this.logger.log('Transactional email provider: Resend API');
+    } else if (this.transporter) {
+      this.logger.log('Transactional email provider: SMTP');
     } else {
-      this.logger.warn('SMTP not configured — transactional emails will not be delivered');
+      this.logger.warn(
+        'No email provider configured — set RESEND_API_KEY or SMTP credentials',
+      );
     }
   }
 
@@ -26,21 +38,68 @@ export class MailerService {
     return `"${smtp?.fromName || 'VAYRO'}" <${smtp?.from || smtp?.user || 'noreply@vayro-wa.com'}>`;
   }
 
+  private get resendFrom() {
+    const resend = this.configService.get<any>('resend');
+    return `${resend?.fromName || 'VAYRO'} <${resend?.from || 'hello@vayro-wa.com'}>`;
+  }
+
   private get dashboardOrigin() {
     return this.configService.get<string>('dashboardOrigin') || 'https://app.vayro-wa.com';
   }
 
   private async send(to: string, subject: string, html: string): Promise<boolean> {
+    if (this.resendApiKey) {
+      try {
+        const response = await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${this.resendApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: this.resendFrom,
+            to: [to],
+            subject,
+            html,
+          }),
+          signal: AbortSignal.timeout(15_000),
+        });
+
+        const bodyText = await response.text();
+        if (!response.ok) {
+          this.logger.error(
+            `Resend failed for ${to}: HTTP ${response.status} ${bodyText.slice(0, 500)}`,
+          );
+          return false;
+        }
+
+        let messageId = '';
+        try {
+          messageId = String(JSON.parse(bodyText)?.id || '');
+        } catch {
+          // Resend accepted the message; the id is only useful for diagnostics.
+        }
+        this.logger.log(
+          `Email sent via Resend to ${to}${messageId ? ` (${messageId})` : ''}: ${subject}`,
+        );
+        return true;
+      } catch (err: any) {
+        this.logger.error(`Resend request failed for ${to}: ${err?.message || err}`);
+        return false;
+      }
+    }
+
     if (!this.transporter) {
-      this.logger.warn(`[EMAIL NOT SENT - SMTP MISSING] To: ${to} | Subject: ${subject}`);
+      this.logger.warn(`[EMAIL NOT SENT - PROVIDER MISSING] To: ${to} | Subject: ${subject}`);
       return false;
     }
+
     try {
       await this.transporter.sendMail({ from: this.smtpFrom, to, subject, html });
-      this.logger.log(`Email sent to ${to}: ${subject}`);
+      this.logger.log(`Email sent via SMTP to ${to}: ${subject}`);
       return true;
     } catch (err: any) {
-      this.logger.error(`Failed to send email to ${to}: ${err?.message}`);
+      this.logger.error(`Failed to send SMTP email to ${to}: ${err?.message}`);
       return false;
     }
   }
