@@ -1,0 +1,418 @@
+.vayro-login-page {
+  min-height: 100vh;
+  background: #f4f7f6;
+  color: #10231d;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  position: relative;
+  overflow: hidden;
+}
+
+.vayro-login-page::before,
+.vayro-login-page::after {
+  content: '';
+  position: absolute;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.vayro-login-page::before {
+  width: 360px;
+  height: 360px;
+  background: rgba(6, 78, 59, 0.05);
+  top: -170px;
+  right: -120px;
+}
+
+.vayro-login-page::after {
+  width: 260px;
+  height: 260px;
+  background: rgba(16, 185, 129, 0.05);
+  bottom: -130px;
+  left: -90px;
+}
+
+.vayro-login-shell {
+  width: min(100%, 1020px);
+  min-height: 610px;
+  background: #ffffff;
+  border: 1px solid #e4ebe8;
+  border-radius: 28px;
+  box-shadow: 0 24px 70px rgba(10, 55, 42, 0.11);
+  display: grid;
+  grid-template-columns: 0.92fr 1.08fr;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+.vayro-login-intro {
+  background: #073f32;
+  color: #ffffff;
+  padding: 34px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.vayro-login-brand,
+.vayro-login-mobile-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.vayro-login-mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  background: #ffffff;
+  color: #073f32;
+  display: grid;
+  place-items: center;
+  font-family: Inter, system-ui, sans-serif;
+  font-weight: 900;
+  font-size: 20px;
+  box-shadow: 0 7px 20px rgba(0, 0, 0, 0.13);
+}
+
+.vayro-login-brand strong {
+  display: block;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 20px;
+  letter-spacing: 0.06em;
+}
+
+.vayro-login-brand span {
+  display: block;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: -2px;
+  direction: ltr;
+}
+
+.vayro-login-mascot {
+  display: grid;
+  place-items: center;
+  margin: 48px 0 18px;
+  min-height: 164px;
+}
+
+.vayro-login-intro-copy {
+  margin-top: auto;
+}
+
+.vayro-login-kicker {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  padding: 4px 11px;
+  color: #b9f4dd;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+.vayro-login-intro h1 {
+  color: #ffffff;
+  font-size: clamp(29px, 3vw, 38px);
+  line-height: 1.3;
+  max-width: 400px;
+}
+
+.vayro-login-intro-copy p {
+  color: rgba(255, 255, 255, 0.68);
+  line-height: 1.9;
+  margin-top: 13px;
+  font-size: 14px;
+  max-width: 410px;
+}
+
+.vayro-login-capabilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 22px;
+}
+
+.vayro-login-capabilities span {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  padding: 5px 9px;
+}
+
+.vayro-login-form-side {
+  padding: 60px 68px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: #ffffff;
+}
+
+.vayro-login-mobile-brand {
+  display: none;
+}
+
+.vayro-login-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  margin-bottom: 31px;
+}
+
+.vayro-login-security-icon {
+  width: 43px;
+  height: 43px;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  background: #edf7f3;
+  color: #075544;
+  flex: 0 0 auto;
+}
+
+.vayro-login-heading h2 {
+  color: #112a22;
+  font-size: 29px;
+  margin: 0;
+}
+
+.vayro-login-heading p {
+  margin-top: 5px;
+  color: #72817c;
+  font-size: 14px;
+}
+
+.vayro-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.vayro-login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: #263a33;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.vayro-login-field-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.vayro-login-field-head a {
+  color: #08745c;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.vayro-login-input {
+  height: 52px;
+  border: 1px solid #dce5e1;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  background: #fbfcfc;
+  color: #87958f;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background 150ms ease;
+}
+
+.vayro-login-input:focus-within {
+  background: #ffffff;
+  border-color: #0c755e;
+  box-shadow: 0 0 0 4px rgba(12, 117, 94, 0.09);
+}
+
+.vayro-login-input input {
+  border: 0;
+  outline: 0;
+  background: transparent;
+  width: 100%;
+  height: 100%;
+  color: #172b24;
+  font: inherit;
+  font-weight: 500;
+  min-width: 0;
+}
+
+.vayro-login-input input::placeholder {
+  color: #a3ada9;
+  font-weight: 400;
+}
+
+.vayro-login-password-toggle {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  color: #84918c;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  border-radius: 8px;
+  flex: 0 0 auto;
+}
+
+.vayro-login-password-toggle:hover {
+  background: #edf5f2;
+  color: #075544;
+}
+
+.vayro-login-alert {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 13px;
+  border-radius: 13px;
+  background: #fff1f1;
+  color: #c33a3a;
+  border: 1px solid #f7d7d7;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.vayro-login-submit {
+  height: 52px;
+  border: 0;
+  border-radius: 14px;
+  background: #075544;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(7, 85, 68, 0.19);
+  transition: transform 150ms ease, background 150ms ease, box-shadow 150ms ease;
+}
+
+.vayro-login-submit:hover:not(:disabled) {
+  background: #064737;
+  transform: translateY(-1px);
+  box-shadow: 0 11px 26px rgba(7, 85, 68, 0.23);
+}
+
+.vayro-login-submit:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.vayro-login-help {
+  margin: 22px 0 0;
+  color: #8a9792;
+  font-size: 12px;
+  line-height: 1.8;
+  text-align: center;
+}
+
+.vayro-login-footer {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #87958f;
+  font-size: 11px;
+  margin-top: 18px;
+}
+
+.vayro-login-footer span:first-child {
+  color: #075544;
+  font-family: Inter, system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+@media (max-width: 860px) {
+  .vayro-login-page {
+    padding: 18px;
+  }
+
+  .vayro-login-shell {
+    width: min(100%, 520px);
+    min-height: auto;
+    display: block;
+    border-radius: 24px;
+  }
+
+  .vayro-login-intro {
+    display: none;
+  }
+
+  .vayro-login-form-side {
+    padding: 30px 26px 28px;
+  }
+
+  .vayro-login-mobile-brand {
+    display: flex;
+    margin-bottom: 34px;
+  }
+
+  .vayro-login-mobile-brand .vayro-login-mark {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+    background: #075544;
+    color: #ffffff;
+    box-shadow: none;
+  }
+
+  .vayro-login-mobile-brand strong {
+    color: #075544;
+    font-family: Inter, system-ui, sans-serif;
+    font-size: 18px;
+    letter-spacing: 0.06em;
+  }
+
+  .vayro-login-heading {
+    margin-bottom: 26px;
+  }
+
+  .vayro-login-heading h2 {
+    font-size: 25px;
+  }
+}
+
+@media (max-width: 420px) {
+  .vayro-login-page {
+    padding: 0;
+    background: #ffffff;
+    place-items: stretch;
+  }
+
+  .vayro-login-shell {
+    width: 100%;
+    min-height: 100vh;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .vayro-login-form-side {
+    min-height: 100vh;
+    padding: 26px 20px;
+  }
+
+  .vayro-login-footer {
+    display: none;
+  }
+}
