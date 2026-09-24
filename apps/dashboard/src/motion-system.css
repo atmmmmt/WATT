@@ -1,0 +1,277 @@
+/* ═══════════════════════════════════════════════════════════════
+   VAYRO — Premium motion system
+   Purpose: make the product feel intentional and responsive without
+   introducing layout shifts or decorative motion that slows work down.
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  --motion-fast: 140ms;
+  --motion-ui: 220ms;
+  --motion-page: 320ms;
+  --motion-ease: cubic-bezier(.22, 1, .36, 1);
+  --motion-soft: cubic-bezier(.32, .72, 0, 1);
+}
+
+@keyframes vayroShimmer {
+  0% { background-position: 180% 0; }
+  100% { background-position: -80% 0; }
+}
+
+@keyframes vayroFadeUp {
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes vayroSoftPop {
+  0% { opacity: 0; transform: scale(.975); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes vayroPulseRing {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,.15); }
+  50% { box-shadow: 0 0 0 7px rgba(16,185,129,0); }
+}
+
+/* ── Route fallback: looks like content is being prepared, not frozen ───── */
+.vayro-route-loader {
+  flex: 1;
+  width: 100%;
+  min-height: min(560px, 65dvh);
+  padding: clamp(18px, 3vw, 34px);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow: hidden;
+}
+
+.vayro-route-loader-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.vayro-route-loader-copy {
+  flex: 1;
+  max-width: 420px;
+  display: grid;
+  gap: 9px;
+}
+
+.vayro-skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--border-soft) 62%, transparent) 20%,
+    color-mix(in srgb, var(--bg-card) 94%, white) 38%,
+    color-mix(in srgb, var(--border-soft) 62%, transparent) 56%
+  );
+  background-size: 220% 100%;
+  animation: vayroShimmer 1.35s linear infinite;
+}
+
+.vayro-skeleton.kicker { width: 92px; height: 10px; border-radius: 99px; }
+.vayro-skeleton.title { width: min(280px, 72vw); height: 27px; }
+.vayro-skeleton.action { width: 112px; height: 43px; border-radius: 13px; }
+
+.vayro-route-loader-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.vayro-loader-card {
+  min-height: 112px;
+  border: 1px solid var(--border-soft);
+  border-radius: 20px;
+  background: var(--bg-card);
+  padding: 16px;
+  box-shadow: var(--shadow-xs);
+  display: grid;
+  align-content: space-between;
+  gap: 18px;
+  animation: vayroSoftPop .28s var(--motion-ease) both;
+}
+
+.vayro-loader-card:nth-child(2) { animation-delay: 35ms; }
+.vayro-loader-card:nth-child(3) { animation-delay: 70ms; }
+.vayro-loader-card:nth-child(4) { animation-delay: 105ms; }
+.vayro-loader-card .vayro-skeleton:first-child { width: 44%; height: 11px; }
+.vayro-loader-card .vayro-skeleton:last-child { width: 66%; height: 25px; }
+
+.vayro-route-loader-panel {
+  min-height: 240px;
+  border: 1px solid var(--border-soft);
+  border-radius: 22px;
+  background: var(--bg-card);
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+}
+
+.vayro-route-loader-panel .vayro-skeleton:nth-child(1) { width: 34%; height: 15px; }
+.vayro-route-loader-panel .vayro-skeleton:nth-child(2) { width: 100%; height: 18px; margin-top: 10px; }
+.vayro-route-loader-panel .vayro-skeleton:nth-child(3) { width: 92%; height: 18px; }
+.vayro-route-loader-panel .vayro-skeleton:nth-child(4) { width: 78%; height: 18px; }
+
+/* ── Micro interactions ─────────────────────────────────────────────── */
+button,
+a.btn-primary,
+a.btn-secondary,
+.btn-primary,
+.btn-secondary,
+.btn-ghost,
+.nav-link,
+.tab-item {
+  transition:
+    transform var(--motion-fast) var(--motion-ease),
+    box-shadow var(--motion-ui) ease,
+    background-color var(--motion-ui) ease,
+    border-color var(--motion-ui) ease,
+    color var(--motion-ui) ease,
+    opacity var(--motion-ui) ease;
+}
+
+button:not(:disabled):active,
+a.btn-primary:active,
+a.btn-secondary:active,
+.btn-primary:not(:disabled):active,
+.btn-secondary:not(:disabled):active,
+.btn-ghost:not(:disabled):active {
+  transform: scale(.975);
+}
+
+input,
+textarea,
+select {
+  transition:
+    border-color var(--motion-ui) ease,
+    box-shadow var(--motion-ui) ease,
+    background-color var(--motion-ui) ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-primary) 10%, transparent);
+}
+
+.badge,
+.auth-alert,
+.pwa-toast,
+.pwa-offline {
+  animation: vayroSoftPop var(--motion-ui) var(--motion-ease) both;
+}
+
+/* Connected / success states get a very restrained living indicator. */
+.badge-success,
+[style*="background: #ecfdf3"][style*="color: #166534"] {
+  animation: vayroSoftPop var(--motion-ui) var(--motion-ease) both;
+}
+
+/* Cards feel tactile on pointer devices, never on touch where hover sticks. */
+@media (hover: hover) and (pointer: fine) {
+  .page-stack .card,
+  .page-stack .stat-card {
+    transition:
+      transform var(--motion-ui) var(--motion-ease),
+      box-shadow var(--motion-ui) ease,
+      border-color var(--motion-ui) ease;
+  }
+
+  .page-stack .card:hover,
+  .page-stack .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(7, 49, 38, .085);
+  }
+
+  .btn-primary:hover:not(:disabled),
+  .btn-secondary:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+}
+
+/* ── Modal/backdrop polish ─────────────────────────────────────────── */
+.page-stack [style*="position: fixed"][style*="inset: 0"] {
+  animation: vayroSoftPop 180ms ease both;
+}
+
+.page-stack [style*="position: fixed"][style*="inset: 0"] > .card,
+.page-stack [style*="position: fixed"][style*="inset: 0"] > [class*="card"] {
+  animation: vayroFadeUp 260ms var(--motion-ease) both;
+}
+
+/* Avoid visible content jumping while images/QRs arrive. */
+img[alt="QR"],
+img[alt="OTP QR"] {
+  animation: vayroSoftPop .32s var(--motion-ease) both;
+}
+
+/* ── Mobile feels like a native surface ───────────────────────────── */
+@media (max-width: 768px) {
+  .vayro-route-loader {
+    min-height: calc(100dvh - var(--m-top, 64px) - var(--m-bottom, 68px));
+    padding: 14px 12px 20px;
+    gap: 12px;
+  }
+
+  .vayro-route-loader-head { align-items: flex-start; }
+  .vayro-skeleton.action { width: 46px; height: 46px; border-radius: 14px; }
+
+  .vayro-route-loader-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .vayro-loader-card {
+    min-height: 96px;
+    border-radius: 18px;
+    padding: 14px;
+  }
+
+  .vayro-route-loader-panel {
+    min-height: 210px;
+    border-radius: 20px;
+    padding: 15px;
+  }
+
+  .mobile-topbar {
+    transition: box-shadow var(--motion-ui) ease, background-color var(--motion-ui) ease;
+  }
+
+  .mobile-tabbar .tab-item .tab-icon {
+    transition: transform 180ms var(--motion-ease), background-color 180ms ease;
+  }
+
+  .mobile-tabbar .tab-item.active .tab-icon {
+    transform: translateY(-2px) scale(1.04);
+  }
+
+  .sidebar.open {
+    animation: none;
+  }
+
+  .ios-install-sheet,
+  .sidebar.open {
+    will-change: transform;
+  }
+
+  /* Don't let tap feedback cause horizontal wobble in full-width controls. */
+  button[style*="width: 100%"]:active,
+  .btn-primary[style*="width: 100%"]:active,
+  .btn-secondary[style*="width: 100%"]:active {
+    transform: scale(.99);
+  }
+}
+
+/* Motion is enhancement, never a requirement. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .001ms !important;
+  }
+}
