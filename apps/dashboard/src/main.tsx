@@ -5,6 +5,7 @@ import { registerPwa } from './lib/pwa';
 import './styles.css';
 import './support-inbox-overrides.css';
 import './mobile-native.css';
+import './mobile-premium.css';
 
 registerPwa();
 
