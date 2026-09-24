@@ -1,0 +1,323 @@
+/* VAYRO support inbox — WhatsApp-like responsive polish */
+
+.inbox-container {
+  height: 100% !important;
+  min-height: 0;
+  background: #efeae2;
+}
+
+.inbox-aside {
+  width: 360px !important;
+  min-width: 320px;
+  background: #fff !important;
+  border-left: 1px solid #dfe5e2 !important;
+}
+
+.inbox-main {
+  min-width: 0;
+  background: #efeae2 !important;
+}
+
+.inbox-main > header {
+  min-height: 68px;
+  padding: 0.7rem 1rem !important;
+  background: #f7f9f8 !important;
+  border-bottom: 1px solid #dfe5e2 !important;
+  box-shadow: 0 1px 2px rgba(15, 46, 39, 0.04);
+}
+
+.inbox-details {
+  width: 300px !important;
+  background: #fff !important;
+  border-right: 1px solid #dfe5e2 !important;
+}
+
+.conv-item {
+  min-height: 74px;
+  padding: 0.78rem 0.9rem !important;
+  border-bottom: 1px solid #eef1ef !important;
+  background: #fff;
+}
+
+.conv-item:hover {
+  background: #f5f7f6 !important;
+}
+
+.conv-item[style*="background"] {
+  transition: background 120ms ease, box-shadow 120ms ease;
+}
+
+.chat-scroll {
+  background-color: #efeae2 !important;
+  padding: 1.35rem clamp(1rem, 2.2vw, 2.25rem) 1.5rem !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(6, 78, 59, 0.25) transparent;
+}
+
+.chat-scroll::-webkit-scrollbar { width: 7px; }
+.chat-scroll::-webkit-scrollbar-thumb {
+  background: rgba(6, 78, 59, 0.22);
+  border-radius: 999px;
+}
+
+/* Message bubbles currently use inline styles. Important rules are intentional here. */
+.chat-scroll [style*="max-width: 70%"] {
+  max-width: min(72%, 660px) !important;
+  box-shadow: 0 1px 1px rgba(17, 24, 39, 0.10) !important;
+  font-size: 0.9rem !important;
+}
+
+.chat-scroll [style*="background: var(--brand-primary)"] {
+  background: #d9fdd3 !important;
+  color: #111b21 !important;
+  border: 1px solid rgba(17, 27, 33, 0.04) !important;
+}
+
+.chat-scroll [style*="background: var(--brand-primary)"] svg {
+  color: #667781 !important;
+  stroke: #667781 !important;
+}
+
+.chat-scroll [style*="background: var(--brand-primary)"] [style*="rgba(255,255,255"] {
+  color: #667781 !important;
+}
+
+.day-chip {
+  background: rgba(255,255,255,0.94);
+  border: 1px solid rgba(17,27,33,0.07);
+  border-radius: 999px;
+  padding: 0.28rem 0.7rem;
+  box-shadow: 0 1px 2px rgba(17,27,33,0.05);
+}
+
+.chat-composer {
+  background: #f0f2f5 !important;
+  border-top: 1px solid #dfe5e2 !important;
+  padding: 0.55rem 0.75rem 0.65rem !important;
+}
+
+.chat-composer > div:last-child > div {
+  background: #fff !important;
+  border: 1px solid #e1e5e3 !important;
+}
+
+.chat-composer > div:last-child > button:last-child {
+  background: #00a884 !important;
+  box-shadow: none !important;
+}
+
+.scroll-bottom-fab {
+  background: #fff !important;
+  color: #54656f !important;
+  border: 1px solid #dfe5e2 !important;
+  box-shadow: 0 2px 8px rgba(17,27,33,.16) !important;
+}
+
+@media (max-width: 1180px) and (min-width: 769px) {
+  .inbox-details { display: none !important; }
+  .inbox-aside { width: 340px !important; }
+}
+
+@media (max-width: 768px) {
+  /* Conversation list behaves like a native app screen. */
+  .inbox-container {
+    width: 100% !important;
+    max-width: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: #fff !important;
+  }
+
+  .inbox-container[data-mv="list"] {
+    height: calc(100dvh - var(--m-top) - var(--m-bottom)) !important;
+  }
+
+  .inbox-aside,
+  .inbox-main {
+    inset: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .inbox-aside {
+    background: #fff !important;
+  }
+
+  .inbox-aside > div:first-child {
+    padding: 0.75rem 0.8rem 0 !important;
+    background: #fff !important;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+
+  .conv-item {
+    min-height: 76px;
+    padding: 0.8rem 0.9rem !important;
+  }
+
+  /* Once a thread is open, it owns the viewport just like WhatsApp mobile. */
+  body.chat-open {
+    overflow: hidden !important;
+    background: #efeae2 !important;
+  }
+
+  body.chat-open .content-area {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 800 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: #efeae2 !important;
+  }
+
+  body.chat-open .inbox-container {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    z-index: 801 !important;
+    overflow: hidden !important;
+    background: #efeae2 !important;
+  }
+
+  body.chat-open .inbox-main {
+    display: flex !important;
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    background: #efeae2 !important;
+  }
+
+  body.chat-open .inbox-main > header {
+    min-height: calc(62px + env(safe-area-inset-top));
+    padding: calc(7px + env(safe-area-inset-top)) 8px 7px !important;
+    background: #f7f9f8 !important;
+    box-shadow: 0 1px 3px rgba(17,27,33,.08);
+    gap: 0.35rem;
+  }
+
+  body.chat-open .inbox-main > header > div:first-child {
+    min-width: 0;
+    flex: 1;
+    gap: 0.55rem !important;
+  }
+
+  body.chat-open .inbox-main > header > div:first-child > div:last-child {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  body.chat-open .inbox-main > header h3 {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 62vw;
+  }
+
+  /* Keep mobile chat header clean: secondary actions remain available on desktop. */
+  body.chat-open .inbox-main > header > div:last-child > button {
+    display: none !important;
+  }
+
+  body.chat-open .inbox-main > header > div:last-child > span {
+    display: none !important;
+  }
+
+  .inbox-back-btn {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 50% !important;
+  }
+
+  .chat-scroll {
+    padding: 0.7rem 0.55rem 0.9rem !important;
+    background: #efeae2 !important;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .chat-scroll [style*="max-width: 70%"] {
+    max-width: 84% !important;
+    padding: 0.5rem 0.7rem 0.38rem !important;
+    border-radius: 11px !important;
+    font-size: 0.88rem !important;
+    line-height: 1.52 !important;
+  }
+
+  .day-chip {
+    position: sticky;
+    top: 6px;
+    z-index: 4;
+    font-size: 0.67rem !important;
+  }
+
+  .chat-composer {
+    padding: 0.4rem 0.45rem calc(0.42rem + env(safe-area-inset-bottom)) !important;
+    background: #f0f2f5 !important;
+  }
+
+  .chat-composer > input[type="file"] + div {
+    margin-bottom: 0.32rem !important;
+    gap: 0.25rem !important;
+  }
+
+  .chat-composer > input[type="file"] + div button {
+    padding: 0.18rem 0.58rem !important;
+    font-size: 0.66rem !important;
+  }
+
+  .chat-composer > div:last-child {
+    gap: 0.36rem !important;
+    align-items: flex-end !important;
+  }
+
+  .chat-composer > div:last-child > div {
+    min-height: 42px !important;
+    border-radius: 21px !important;
+    padding: 0.55rem 0.85rem !important;
+    background: #fff !important;
+  }
+
+  .chat-composer > div:last-child > button {
+    width: 42px !important;
+    height: 42px !important;
+  }
+
+  .chat-composer textarea {
+    font-size: 16px !important; /* Prevents iOS input zoom. */
+    max-height: 96px !important;
+  }
+
+  .inbox-details { display: none !important; }
+}
+
+[data-theme='dark'] .inbox-container,
+[data-theme='dark'] .inbox-main,
+[data-theme='dark'] .chat-scroll {
+  background: #0b141a !important;
+}
+
+[data-theme='dark'] .inbox-aside,
+[data-theme='dark'] .inbox-details,
+[data-theme='dark'] .inbox-main > header {
+  background: #111b21 !important;
+  border-color: #26343c !important;
+}
+
+[data-theme='dark'] .conv-item {
+  background: #111b21;
+  border-color: #202c33 !important;
+}
+
+[data-theme='dark'] .conv-item:hover { background: #202c33 !important; }
+[data-theme='dark'] .chat-composer { background: #202c33 !important; border-color: #2a3942 !important; }
+[data-theme='dark'] .chat-composer > div:last-child > div { background: #2a3942 !important; border-color: #2a3942 !important; }
+[data-theme='dark'] .chat-scroll [style*="background: var(--brand-primary)"] { background: #005c4b !important; color: #e9edef !important; }
