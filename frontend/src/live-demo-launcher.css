@@ -1,0 +1,87 @@
+.live-demo-launcher {
+  position: fixed;
+  z-index: 190;
+  inset-inline-end: 20px;
+  bottom: 20px;
+  min-height: 58px;
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  border: 1px solid rgba(49, 211, 153, .34);
+  border-radius: 18px;
+  background: rgba(4, 24, 18, .92);
+  color: #f6fff9;
+  padding: 9px 10px 9px 12px;
+  text-decoration: none;
+  box-shadow: 0 22px 55px rgba(3, 26, 19, .27), inset 0 1px rgba(255,255,255,.05);
+  backdrop-filter: blur(18px) saturate(145%);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
+  transition: transform .22s cubic-bezier(.22,1,.36,1), border-color .22s ease, box-shadow .22s ease;
+}
+.live-demo-launcher:hover {
+  transform: translateY(-3px);
+  border-color: rgba(86, 239, 183, .58);
+  box-shadow: 0 28px 70px rgba(3, 26, 19, .34), 0 0 0 5px rgba(49,211,153,.05);
+}
+.live-demo-launcher-pulse {
+  width: 12px;
+  height: 12px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+.live-demo-launcher-pulse i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #31d399;
+  box-shadow: 0 0 0 0 rgba(49,211,153,.45);
+  animation: liveDemoPulse 1.8s ease-out infinite;
+}
+.live-demo-launcher-copy {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+.live-demo-launcher-copy small {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #7fe8bf;
+  font-family: Inter, sans-serif;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .11em;
+}
+.live-demo-launcher-copy strong {
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+.live-demo-launcher-play {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 12px;
+  background: #31d399;
+  color: #032017;
+}
+@keyframes liveDemoPulse {
+  0% { box-shadow: 0 0 0 0 rgba(49,211,153,.42); }
+  70%,100% { box-shadow: 0 0 0 9px rgba(49,211,153,0); }
+}
+@media (max-width: 640px) {
+  .live-demo-launcher {
+    inset-inline: 12px;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    width: calc(100% - 24px);
+    justify-content: center;
+    border-radius: 16px;
+  }
+  .live-demo-launcher-copy { flex: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-demo-launcher-pulse i { animation: none; }
+}

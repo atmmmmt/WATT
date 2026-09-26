@@ -21,8 +21,59 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <style>
+      #vayro-boot-splash { display: none; }
+      @media (max-width: 768px) {
+        #vayro-boot-splash {
+          position: fixed;
+          inset: 0;
+          z-index: 99999;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 16px;
+          padding: env(safe-area-inset-top) 24px env(safe-area-inset-bottom);
+          background: #f7faf9;
+          color: #064e3b;
+          font-family: 'Tajawal', system-ui, sans-serif;
+          transition: opacity .18s ease, visibility .18s ease;
+        }
+        #vayro-boot-splash.is-ready { opacity: 0; visibility: hidden; pointer-events: none; }
+        #vayro-boot-splash img { width: 88px; height: 88px; object-fit: contain; border-radius: 24px; }
+        #vayro-boot-splash strong { font-family: Inter, system-ui, sans-serif; font-size: 25px; letter-spacing: .08em; }
+        #vayro-boot-splash span { font-size: 12px; color: #6b7f78; }
+        #vayro-boot-splash i {
+          display: block;
+          width: 28px;
+          height: 3px;
+          border-radius: 99px;
+          background: #d9e7e2;
+          overflow: hidden;
+          position: relative;
+          margin-top: 4px;
+        }
+        #vayro-boot-splash i::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          width: 45%;
+          border-radius: inherit;
+          background: #10b981;
+          animation: vayroBoot 1s ease-in-out infinite alternate;
+        }
+        @keyframes vayroBoot { from { transform: translateX(-10px); } to { transform: translateX(26px); } }
+      }
+    </style>
   </head>
   <body>
+    <div id="vayro-boot-splash" aria-hidden="true">
+      <img src="/icons/icon-192.png" alt="" />
+      <strong>VAYRO</strong>
+      <span>تواصل أذكى لأعمال أكبر</span>
+      <i></i>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

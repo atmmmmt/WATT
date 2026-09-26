@@ -29,17 +29,22 @@ interface ExportPackageInput {
   sessionDisconnectEndpoint?: string;
 }
 
+const BRAND = {
+  logoWhite: '/brand/vayro-logo-white.png',
+  logo: '/brand/vayro-logo.png',
+  mascotApi: '/mascot/thumbs.webp',
+  mascotSupport: '/mascot/wave.webp',
+  mascotHr: '/mascot/working.webp',
+};
+
 const OTP_TEMPLATE_FALLBACKS = {
-  login:
-    'رمز تسجيل الدخول الخاص بك هو {{code}}. هذا الرمز صالح لمدة {{expiresInMinutes}} دقيقة.',
-  register:
-    'رمز تأكيد إنشاء الحساب هو {{code}}. هذا الرمز صالح لمدة {{expiresInMinutes}} دقيقة.',
-  forgotPassword:
-    'رمز إعادة تعيين كلمة المرور هو {{code}}. هذا الرمز صالح لمدة {{expiresInMinutes}} دقيقة.',
+  login: 'رمز تسجيل الدخول الخاص بك هو {{code}}. هذا الرمز صالح لمدة {{expiresInMinutes}} دقيقة.',
+  register: 'رمز تأكيد إنشاء الحساب هو {{code}}. هذا الرمز صالح لمدة {{expiresInMinutes}} دقيقة.',
+  forgotPassword: 'رمز إعادة تعيين كلمة المرور هو {{code}}. هذا الرمز صالح لمدة {{expiresInMinutes}} دقيقة.',
 };
 
 function escapeHtml(value: string | number | null | undefined) {
-  return String(value || '')
+  return String(value ?? '')
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
@@ -59,130 +64,113 @@ function providerLabel(providerType: string) {
   }
 }
 
+function brandHero(input: ExportPackageInput, options: {
+  badge: string;
+  title: string;
+  description: string;
+  mascot: string;
+  service: string;
+}) {
+  return `
+    <section class="hero">
+      <div class="hero-content">
+        <img class="hero-logo" src="${BRAND.logoWhite}" alt="VAYRO" />
+        <div class="hero-badge">${escapeHtml(options.badge)}</div>
+        <h1>${escapeHtml(options.title)}</h1>
+        <p>${escapeHtml(options.description)}</p>
+        <div class="hero-meta">
+          <div><span>العميل</span><strong>${escapeHtml(input.tenantName)}</strong></div>
+          <div><span>الخدمة</span><strong>${escapeHtml(options.service)}</strong></div>
+          <div><span>الباقة</span><strong>${escapeHtml(input.planName)}</strong></div>
+          <div><span>ينتهي الاشتراك</span><strong>${escapeHtml(input.subscriptionEnd)}</strong></div>
+        </div>
+      </div>
+      <div class="hero-character">
+        <div class="mascot-glow"></div>
+        <img class="hero-mascot" src="${options.mascot}" alt="" />
+        <div class="hero-stamp">VAYRO</div>
+        <div class="hero-stamp-sub">BUSINESS MESSAGING PLATFORM</div>
+      </div>
+    </section>
+  `;
+}
+
+function footer() {
+  return `
+    <footer class="package-footer">
+      <img src="${BRAND.logo}" alt="VAYRO" />
+      <div>
+        <strong>VAYRO</strong>
+        <span>تواصل أذكى لأعمال أكبر</span>
+      </div>
+      <div class="footer-site">vayro-wa.com</div>
+    </footer>
+  `;
+}
+
+function portalSection(input: ExportPackageInput, defaultRole: string) {
+  return `
+    <section class="panel">
+      <div class="section-kicker">CUSTOMER PORTAL</div>
+      <div class="section-title">بيانات دخول بوابة العميل</div>
+      <div class="info-grid">
+        <div class="info-card accent"><div class="info-label">رابط البوابة</div><div class="info-value ltr">${escapeHtml(input.dashboardUrl || '')}</div></div>
+        <div class="info-card"><div class="info-label">نوع الحساب</div><div class="info-value">${escapeHtml(input.portalRoleLabel || defaultRole)}</div></div>
+        <div class="info-card"><div class="info-label">البريد الإلكتروني</div><div class="info-value ltr">${escapeHtml(input.portalEmail || input.contactEmail || '')}</div></div>
+        <div class="info-card"><div class="info-label">كلمة المرور</div><div class="info-value">${escapeHtml(input.portalPassword || 'استخدم كلمة المرور التي تم تسليمها عند التفعيل أو اطلب إعادة تعيينها')}</div></div>
+      </div>
+    </section>
+  `;
+}
+
 function buildApiTemplate(input: ExportPackageInput) {
-  const docsUrl = `${input.apiBaseUrl.replace(/\/$/, '')}/docs`;
+  const baseUrl = input.apiBaseUrl.replace(/\/$/, '');
+  const docsUrl = `${baseUrl}/docs`;
   const isMock = input.providerType === 'mock';
-  const hasQrFlow =
-    input.providerType === 'whatsapp_web' &&
-    input.sessionStartEndpoint &&
-    input.sessionStatusEndpoint &&
-    input.sessionDisconnectEndpoint;
-
-  const warning = isMock
-    ? `
-      <section class="warning">
-        <div class="warning-title">تنبيه مهم</div>
-        <p>هذه الحزمة مضبوطة على وضع <strong>Mock</strong> للتجربة فقط. لن يتم إرسال رسائل حقيقية حتى يتم تحويل المزود إلى ربط واتساب فعلي أو مزود إنتاج.</p>
-      </section>
-    `
-    : '';
-
-  const qrSection = hasQrFlow
-    ? `
-      <section class="panel">
-        <div class="section-title">5. إدارة جلسة واتساب عبر QR</div>
-        <p class="section-copy">هذه المسارات تستخدم فقط إذا كان الربط يعمل عبر <strong>whatsapp_web</strong>. يجب أن تصبح الجلسة في حالة <strong>ready</strong> قبل الإرسال الفعلي للـ OTP.</p>
-        <div class="code-label">بدء جلسة الربط</div>
-        <pre>POST ${escapeHtml(input.sessionStartEndpoint)}</pre>
-        <div class="code-label">متابعة حالة الجلسة</div>
-        <pre>GET ${escapeHtml(input.sessionStatusEndpoint)}</pre>
-        <div class="code-label">فصل الجلسة</div>
-        <pre>POST ${escapeHtml(input.sessionDisconnectEndpoint)}</pre>
-      </section>
-    `
-    : '';
-
-  const effectiveOtpTemplates = {
+  const hasQrFlow = input.providerType === 'whatsapp_web' && input.sessionStartEndpoint && input.sessionStatusEndpoint && input.sessionDisconnectEndpoint;
+  const templates = {
     login: input.otpTemplates?.login || OTP_TEMPLATE_FALLBACKS.login,
     register: input.otpTemplates?.register || OTP_TEMPLATE_FALLBACKS.register,
-    forgotPassword:
-      input.otpTemplates?.forgotPassword || OTP_TEMPLATE_FALLBACKS.forgotPassword,
+    forgotPassword: input.otpTemplates?.forgotPassword || OTP_TEMPLATE_FALLBACKS.forgotPassword,
   };
 
   return `
     <div class="package-shell" dir="rtl">
-      <section class="hero hero-api">
-        <div class="hero-main">
-          <div class="eyebrow">VAYRO Delivery</div>
-          <h1>حزمة تسليم خدمة واتساب OTP</h1>
-          <p>هذه الحزمة موجهة لكم ولفريقكم التقني، وتحتوي على كل ما يلزم لتشغيل وربط خدمة التحقق عبر واتساب داخل موقعكم أو تطبيقكم.</p>
-        </div>
-        <div class="hero-summary">
-          <div class="summary-row">
-            <span>العميل</span>
-            <strong>${escapeHtml(input.tenantName)}</strong>
-          </div>
-          <div class="summary-row">
-            <span>الباقة</span>
-            <strong>${escapeHtml(input.planName)}</strong>
-          </div>
-          <div class="summary-row">
-            <span>المزود</span>
-            <strong>${escapeHtml(providerLabel(input.providerType))}</strong>
-          </div>
-          <div class="summary-row">
-            <span>ينتهي الاشتراك</span>
-            <strong>${escapeHtml(input.subscriptionEnd)}</strong>
-          </div>
-        </div>
-      </section>
+      ${brandHero(input, {
+        badge: 'VAYRO DELIVERY',
+        title: 'حزمة تسليم خدمة واتساب OTP',
+        description: 'ملف تسليم جاهز لفريقكم التقني، يتضمن بيانات الربط، مفاتيح API، المسارات وقوالب رسائل التحقق.',
+        mascot: BRAND.mascotApi,
+        service: 'واتساب OTP',
+      })}
 
-      ${warning}
+      ${isMock ? `<section class="warning"><strong>تنبيه مهم</strong><span>هذه الحزمة حالياً على وضع Mock للتجربة ولن ترسل رسائل واتساب حقيقية قبل تفعيل الربط الفعلي.</span></section>` : ''}
 
       <section class="panel">
+        <div class="section-kicker">INTEGRATION</div>
         <div class="section-title">1. بيانات الربط الأساسية</div>
         <div class="info-grid">
-          <div class="info-card">
-            <div class="info-label">Base URL</div>
-            <div class="info-value ltr">${escapeHtml(input.apiBaseUrl)}</div>
-          </div>
-          <div class="info-card">
-            <div class="info-label">Swagger / Docs</div>
-            <div class="info-value ltr">${escapeHtml(docsUrl)}</div>
-          </div>
-          <div class="info-card">
-            <div class="info-label">API Key</div>
-            <div class="info-value ltr">${escapeHtml(input.rawKey || '')}</div>
-          </div>
-          <div class="info-card">
-            <div class="info-label">Required Header</div>
-            <div class="info-value ltr">x-api-key: ${escapeHtml(input.rawKey || '')}</div>
-          </div>
+          <div class="info-card accent"><div class="info-label">Base URL</div><div class="info-value ltr">${escapeHtml(baseUrl)}</div></div>
+          <div class="info-card"><div class="info-label">Swagger / Docs</div><div class="info-value ltr">${escapeHtml(docsUrl)}</div></div>
+          <div class="info-card"><div class="info-label">API Key</div><div class="info-value ltr mono">${escapeHtml(input.rawKey || '')}</div></div>
+          <div class="info-card"><div class="info-label">Required Header</div><div class="info-value ltr mono">x-api-key: ${escapeHtml(input.rawKey || '')}</div></div>
         </div>
+        <div class="security-note"><b>مهم:</b> لا تضع API Key داخل كود Front-End مكشوف. استخدمه فقط في السيرفر أو بيئة خلفية محمية.</div>
       </section>
 
-      <section class="panel">
-        <div class="section-title">2. بيانات دخول بوابة العميل</div>
-        <div class="info-grid">
-          <div class="info-card">
-            <div class="info-label">رابط البوابة</div>
-            <div class="info-value ltr">${escapeHtml(input.dashboardUrl || '')}</div>
-          </div>
-          <div class="info-card">
-            <div class="info-label">نوع الحساب</div>
-            <div class="info-value">${escapeHtml(input.portalRoleLabel || 'مدير الشركة / بوابة العميل')}</div>
-          </div>
-          <div class="info-card">
-            <div class="info-label">البريد الإلكتروني</div>
-            <div class="info-value ltr">${escapeHtml(input.portalEmail || input.contactEmail || '')}</div>
-          </div>
-          <div class="info-card">
-            <div class="info-label">كلمة المرور</div>
-            <div class="info-value">${escapeHtml(input.portalPassword || 'استخدم كلمة المرور التي تم تسليمها عند التفعيل أو اطلب إعادة تعيينها')}</div>
-          </div>
-        </div>
-      </section>
+      ${portalSection(input, 'مدير الشركة / بوابة العميل')}
 
       <section class="panel">
+        <div class="section-kicker">API ENDPOINTS</div>
         <div class="section-title">3. المسارات المطلوبة للمطور</div>
         <div class="code-label">إرسال كود OTP</div>
-        <pre>POST ${escapeHtml(input.sendEndpoint || '/v1/otp/send')}
+        <pre>POST ${escapeHtml(input.sendEndpoint || `${baseUrl}/v1/otp/send`)}
 {
   "phoneNumber": "+9639xxxxxxxx",
   "purpose": "login"
 }</pre>
         <div class="code-label">التحقق من الكود</div>
-        <pre>POST ${escapeHtml(input.verifyEndpoint || '/v1/otp/verify')}
+        <pre>POST ${escapeHtml(input.verifyEndpoint || `${baseUrl}/v1/otp/verify`)}
 {
   "phoneNumber": "+9639xxxxxxxx",
   "code": "123456"
@@ -190,66 +178,61 @@ function buildApiTemplate(input: ExportPackageInput) {
       </section>
 
       <section class="panel">
+        <div class="section-kicker">MESSAGING</div>
         <div class="section-title">4. إرسال رسائل واتساب نصية عامة</div>
-        <p class="section-copy">يتيح هذا المسار إرسال رسالة نصية حرة عبر نفس جلسة واتساب المتصلة — مفيد لإشعار مزودي الخدمة أو أي إخطارات داخلية تحتاجها. يستخدم نفس الـ API Key بدون أي إعداد إضافي.</p>
-        <div class="code-label">إرسال رسالة نصية</div>
-        <pre>POST ${escapeHtml(input.apiBaseUrl.replace(/\/$/, ''))}/v1/whatsapp/send
+        <p class="section-copy">يمكن إرسال رسالة نصية عبر نفس جلسة واتساب المتصلة باستخدام مفتاح API نفسه.</p>
+        <div class="code-label">إرسال رسالة</div>
+        <pre>POST ${escapeHtml(baseUrl)}/v1/whatsapp/send
 {
   "phoneNumber": "+9639xxxxxxxx",
-  "message":     "نص الرسالة"
+  "message": "نص الرسالة"
 }</pre>
-        <div class="code-label">استجابة النجاح</div>
-        <pre>{ "success": true }</pre>
-        <div class="code-label">استجابة الخطأ</div>
-        <pre>{ "success": false, "message": "وصف الخطأ" }</pre>
       </section>
 
-      ${qrSection}
+      ${hasQrFlow ? `
+        <section class="panel">
+          <div class="section-kicker">WHATSAPP SESSION</div>
+          <div class="section-title">5. إدارة جلسة واتساب عبر QR</div>
+          <p class="section-copy">يجب أن تصبح الجلسة في حالة <strong>ready</strong> قبل إرسال رسائل حقيقية.</p>
+          <div class="code-label">بدء جلسة الربط</div><pre>POST ${escapeHtml(input.sessionStartEndpoint)}</pre>
+          <div class="code-label">متابعة حالة الجلسة</div><pre>GET ${escapeHtml(input.sessionStatusEndpoint)}</pre>
+          <div class="code-label">فصل الجلسة</div><pre>POST ${escapeHtml(input.sessionDisconnectEndpoint)}</pre>
+        </section>
+      ` : ''}
 
       <section class="panel">
+        <div class="section-kicker">GO LIVE</div>
         <div class="section-title">6. خطوات التشغيل الصحيحة</div>
         <div class="steps">
-          <div class="step"><b>1.</b> مرر <span class="ltr">API Key</span> داخل الهيدر <span class="ltr">x-api-key</span> في كل طلب.</div>
-          <div class="step"><b>2.</b> استدعِ <span class="ltr">sendOtp</span> عندما يطلب المستخدم تسجيل الدخول أو التحقق.</div>
-          <div class="step"><b>3.</b> استقبل الكود من المستخدم ثم استدعِ <span class="ltr">verifyOtp</span>.</div>
-          <div class="step"><b>4.</b> يمكنكم من بوابة VAYRO متابعة حالة QR وإصدار مفاتيح API جديدة عند الحاجة، بينما تبقى نصوص الرسائل المعتمدة موضحة لكم في هذا الملف.</div>
-          <div class="step"><b>5.</b> في حالة <span class="ltr">whatsapp_web</span> تأكد أن جلسة واتساب في حالة <span class="ltr">ready</span> قبل التشغيل الفعلي.</div>
-          <div class="step"><b>6.</b> لا تشارك المفتاح الخام إلا مع المطور أو المسؤول التقني.</div>
+          <div class="step"><b>01</b><span>أرسل API Key ضمن الهيدر <span class="ltr">x-api-key</span> في كل طلب.</span></div>
+          <div class="step"><b>02</b><span>استدعِ Endpoint الإرسال عندما يطلب المستخدم رمز التحقق.</span></div>
+          <div class="step"><b>03</b><span>استقبل الرمز من المستخدم ثم نفّذ Endpoint التحقق.</span></div>
+          <div class="step"><b>04</b><span>راقب جلسة واتساب من بوابة VAYRO وتأكد أنها Ready قبل الإنتاج.</span></div>
+          <div class="step"><b>05</b><span>لا تشارك المفتاح الخام إلا مع المطور أو المسؤول التقني المخول.</span></div>
         </div>
       </section>
 
       <section class="panel">
-        <div class="section-title">7. قوالب رسائل OTP المعتمدة لحسابكم</div>
-        <div class="bullet-list">
-          <div class="bullet">هذه هي النصوص المعتمدة حالياً لحسابكم، وهي التي سيستخدمها النظام فعلياً عند إرسال رسائل OTP إلى مستخدميكم.</div>
-          <div class="bullet">المتغير الإلزامي داخل كل رسالة هو <span class="ltr">{{code}}</span>، وهذا هو الموضع الذي سيظهر فيه رمز التحقق الفعلي داخل النص.</div>
-          <div class="bullet">المتغير الاختياري <span class="ltr">{{expiresInMinutes}}</span> يضيف مدة صلاحية الكود داخل الرسالة عند الحاجة.</div>
-        </div>
+        <div class="section-kicker">OTP TEMPLATES</div>
+        <div class="section-title">7. قوالب رسائل OTP المعتمدة</div>
         <div class="template-grid">
-          <div class="template-card">
-            <div class="template-title">تسجيل الدخول</div>
-            <div class="template-body">${escapeHtml(effectiveOtpTemplates.login)}</div>
-          </div>
-          <div class="template-card">
-            <div class="template-title">تأكيد إنشاء الحساب</div>
-            <div class="template-body">${escapeHtml(effectiveOtpTemplates.register)}</div>
-          </div>
-          <div class="template-card">
-            <div class="template-title">نسيان كلمة المرور</div>
-            <div class="template-body">${escapeHtml(effectiveOtpTemplates.forgotPassword)}</div>
-          </div>
+          <div class="template-card"><div class="template-title">تسجيل الدخول</div><div class="template-body">${escapeHtml(templates.login)}</div></div>
+          <div class="template-card"><div class="template-title">تأكيد إنشاء الحساب</div><div class="template-body">${escapeHtml(templates.register)}</div></div>
+          <div class="template-card"><div class="template-title">نسيان كلمة المرور</div><div class="template-body">${escapeHtml(templates.forgotPassword)}</div></div>
         </div>
+        <div class="security-note">المتغير <span class="ltr">{{code}}</span> إلزامي، و<span class="ltr">{{expiresInMinutes}}</span> اختياري لإظهار مدة صلاحية الرمز.</div>
       </section>
 
-      <section class="panel">
+      <section class="panel compact-panel">
+        <div class="section-kicker">NOTES</div>
         <div class="section-title">8. ملاحظات تشغيلية</div>
         <div class="bullet-list">
-          <div class="bullet">استخدم هذا المفتاح فقط داخل بيئة السيرفر أو داخل لوحة إدارة محمية، وليس داخل تطبيق عميل مكشوف.</div>
-          <div class="bullet">إذا تم إصدار مفتاح جديد للتسليم، اعتبره المرجع المعتمد وأوقف مشاركة أي مفتاح أقدم.</div>
-          <div class="bullet">في حالة الربط عبر QR يجب إبقاء جلسة واتساب في حالة جاهزة قبل التشغيل الفعلي.</div>
-          <div class="bullet">المرجع التقني الأساسي لأي تكامل أو اختبار إضافي هو Swagger الموجود على نفس رابط الـ API.</div>
+          <div class="bullet">Swagger هو المرجع التقني الأساسي لأي تكامل أو اختبار إضافي.</div>
+          <div class="bullet">إذا تم إصدار مفتاح API جديد، أوقف مشاركة أي مفتاح قديم.</div>
+          <div class="bullet">في الربط عبر QR يجب إبقاء جلسة واتساب جاهزة قبل التشغيل الفعلي.</div>
         </div>
       </section>
+      ${footer()}
     </div>
   `;
 }
@@ -257,60 +240,35 @@ function buildApiTemplate(input: ExportPackageInput) {
 function buildSupportTemplate(input: ExportPackageInput) {
   return `
     <div class="package-shell" dir="rtl">
-      <section class="hero hero-support">
-        <div class="hero-main">
-          <div class="eyebrow">VAYRO Support Hub</div>
-          <h1>دليل استخدام صندوق الدعم المشترك</h1>
-          <p>هذا الملف موجه لكم لبدء تشغيل صندوق الدعم المشترك وإدارة فريق الدعم من داخل لوحة التحكم.</p>
-        </div>
-        <div class="hero-summary">
-          <div class="summary-row"><span>العميل</span><strong>${escapeHtml(input.tenantName)}</strong></div>
-          <div class="summary-row"><span>الخدمة</span><strong>صندوق الدعم المشترك</strong></div>
-          <div class="summary-row"><span>ينتهي الاشتراك</span><strong>${escapeHtml(input.subscriptionEnd)}</strong></div>
-        </div>
-      </section>
-
+      ${brandHero(input, {
+        badge: 'VAYRO SUPPORT HUB',
+        title: 'دليل استخدام صندوق الدعم المشترك',
+        description: 'كل ما يحتاجه فريقكم لربط رقم واتساب وتشغيل صندوق موحد وتوزيع المحادثات بين الموظفين.',
+        mascot: BRAND.mascotSupport,
+        service: 'الصندوق المشترك',
+      })}
+      ${portalSection(input, 'مدير الدعم')}
       <section class="panel">
-        <div class="section-title">1. بيانات الدخول</div>
-        <div class="info-grid">
-          <div class="info-card">
-            <div class="info-label">رابط البوابة</div>
-            <div class="info-value ltr">${escapeHtml(input.dashboardUrl || '')}</div>
-          </div>
-          <div class="info-card">
-            <div class="info-label">البريد الإلكتروني</div>
-            <div class="info-value ltr">${escapeHtml(input.portalEmail || input.contactEmail || '')}</div>
-          </div>
-          <div class="info-card">
-            <div class="info-label">كلمة المرور</div>
-            <div class="info-value">${escapeHtml(input.portalPassword || 'استخدم كلمة المرور التي تم تسليمها عند التفعيل أو اطلب إعادة تعيينها')}</div>
-          </div>
-          <div class="info-card">
-            <div class="info-label">نوع الحساب</div>
-            <div class="info-value">${escapeHtml(input.portalRoleLabel || 'مدير الدعم')}</div>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel">
+        <div class="section-kicker">FIRST RUN</div>
         <div class="section-title">2. أول تشغيل</div>
         <div class="steps">
-          <div class="step"><b>1.</b> سجل الدخول إلى لوحة التحكم بالحساب المسلم لك.</div>
-          <div class="step"><b>2.</b> افتح قسم ربط واتساب الدعم.</div>
-          <div class="step"><b>3.</b> امسح رمز QR من رقم واتساب الشركة.</div>
-          <div class="step"><b>4.</b> انتظر حتى تظهر الحالة متصل أو جاهز.</div>
+          <div class="step"><b>01</b><span>سجل الدخول إلى بوابة VAYRO بالحساب المسلم لك.</span></div>
+          <div class="step"><b>02</b><span>افتح قسم ربط واتساب واضغط بدء جلسة ربط.</span></div>
+          <div class="step"><b>03</b><span>من واتساب افتح الأجهزة المرتبطة وامسح QR.</span></div>
+          <div class="step"><b>04</b><span>انتظر حتى تصبح حالة الجلسة Connected / Ready.</span></div>
         </div>
       </section>
-
       <section class="panel">
+        <div class="section-kicker">SHARED INBOX</div>
         <div class="section-title">3. كيف يعمل الصندوق</div>
-        <div class="bullet-list">
-          <div class="bullet">كل الرسائل الواردة تظهر داخل صندوق المحادثات المشترك.</div>
-          <div class="bullet">يمكن توزيع المحادثات على الموظفين أو المشرفين.</div>
-          <div class="bullet">كل رسالة صادرة تحفظ باسم الموظف الذي أرسلها.</div>
-          <div class="bullet">يمكن استخدام الملاحظات الداخلية والردود السريعة.</div>
+        <div class="feature-grid">
+          <div class="feature"><b>01</b><strong>صندوق موحد</strong><span>كل الرسائل الواردة تظهر في مكان واحد.</span></div>
+          <div class="feature"><b>02</b><strong>توزيع المحادثات</strong><span>تعيين أو Claim للمحادثات حسب الفريق.</span></div>
+          <div class="feature"><b>03</b><strong>هوية الموظف</strong><span>يسجل النظام اسم الموظف الذي أرسل كل رد.</span></div>
+          <div class="feature"><b>04</b><strong>أدوات الفريق</strong><span>ملاحظات داخلية، ردود سريعة، Tags وتقارير.</span></div>
         </div>
       </section>
+      ${footer()}
     </div>
   `;
 }
@@ -318,50 +276,35 @@ function buildSupportTemplate(input: ExportPackageInput) {
 function buildHrTemplate(input: ExportPackageInput) {
   return `
     <div class="package-shell" dir="rtl">
-      <section class="hero hero-hr">
-        <div class="hero-main">
-          <div class="eyebrow">VAYRO HR Suite</div>
-          <h1>دليل إدارة التوظيف عبر واتساب</h1>
-          <p>هذا الملف موجه لكم لبدء تشغيل منصة التوظيف عبر واتساب وإدارة الوظائف والمرشحين من داخل اللوحة.</p>
-        </div>
-        <div class="hero-summary">
-          <div class="summary-row"><span>العميل</span><strong>${escapeHtml(input.tenantName)}</strong></div>
-          <div class="summary-row"><span>الخدمة</span><strong>منصة التوظيف</strong></div>
-          <div class="summary-row"><span>ينتهي الاشتراك</span><strong>${escapeHtml(input.subscriptionEnd)}</strong></div>
-        </div>
-      </section>
-
+      ${brandHero(input, {
+        badge: 'VAYRO HR SUITE',
+        title: 'دليل إدارة التوظيف عبر واتساب',
+        description: 'دليل سريع لتشغيل وظائفكم، متابعة المرشحين والتواصل معهم عبر واتساب من لوحة موحدة.',
+        mascot: BRAND.mascotHr,
+        service: 'منصة التوظيف',
+      })}
+      ${portalSection(input, 'مدير التوظيف')}
       <section class="panel">
-        <div class="section-title">1. بيانات الدخول</div>
-        <div class="info-grid">
-          <div class="info-card">
-            <div class="info-label">رابط البوابة</div>
-            <div class="info-value ltr">${escapeHtml(input.dashboardUrl || '')}</div>
-          </div>
-          <div class="info-card">
-            <div class="info-label">البريد الإلكتروني</div>
-            <div class="info-value ltr">${escapeHtml(input.portalEmail || input.contactEmail || '')}</div>
-          </div>
-          <div class="info-card">
-            <div class="info-label">كلمة المرور</div>
-            <div class="info-value">${escapeHtml(input.portalPassword || 'استخدم كلمة المرور التي تم تسليمها عند التفعيل أو اطلب إعادة تعيينها')}</div>
-          </div>
-          <div class="info-card">
-            <div class="info-label">نوع الحساب</div>
-            <div class="info-value">${escapeHtml(input.portalRoleLabel || 'مدير التوظيف')}</div>
-          </div>
-        </div>
-      </section>
-
-      <section class="panel">
+        <div class="section-kicker">GET STARTED</div>
         <div class="section-title">2. بداية التشغيل</div>
         <div class="steps">
-          <div class="step"><b>1.</b> سجل الدخول إلى لوحة التحكم بالحساب المسلم لك.</div>
-          <div class="step"><b>2.</b> اربط رقم واتساب الشركة من صفحة الربط.</div>
-          <div class="step"><b>3.</b> أنشئ الوظائف من قسم الوظائف.</div>
-          <div class="step"><b>4.</b> تابع المرشحين من صندوق التوظيف والتقارير.</div>
+          <div class="step"><b>01</b><span>سجل الدخول إلى لوحة التحكم بالحساب المسلم لك.</span></div>
+          <div class="step"><b>02</b><span>اربط رقم واتساب الشركة من صفحة الربط.</span></div>
+          <div class="step"><b>03</b><span>أنشئ الوظائف وحدد تفاصيل كل وظيفة.</span></div>
+          <div class="step"><b>04</b><span>تابع المرشحين من صندوق التوظيف والتقارير.</span></div>
         </div>
       </section>
+      <section class="panel">
+        <div class="section-kicker">WORKFLOW</div>
+        <div class="section-title">3. دورة عمل فريق التوظيف</div>
+        <div class="feature-grid">
+          <div class="feature"><b>01</b><strong>استقبال الطلبات</strong><span>كل طلب مرتبط بالوظيفة والمرشح.</span></div>
+          <div class="feature"><b>02</b><strong>مراحل واضحة</strong><span>نقل المرشح بين المراحل وتسجيل كل تحديث.</span></div>
+          <div class="feature"><b>03</b><strong>واتساب مباشر</strong><span>مراسلة المرشح من داخل لوحة VAYRO.</span></div>
+          <div class="feature"><b>04</b><strong>تقارير الفريق</strong><span>متابعة أعداد الطلبات والحركة والنتائج.</span></div>
+        </div>
+      </section>
+      ${footer()}
     </div>
   `;
 }
@@ -369,8 +312,7 @@ function buildHrTemplate(input: ExportPackageInput) {
 function buildStyles() {
   return `
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    .package-shell,
-    .package-shell * {
+    .package-shell, .package-shell * {
       font-family: 'Cairo', 'Tahoma', 'Arial Unicode MS', Arial, sans-serif !important;
       direction: rtl;
       unicode-bidi: plaintext;
@@ -379,206 +321,162 @@ function buildStyles() {
     }
     .package-shell {
       width: 794px;
-      padding: 40px;
-      background: #ffffff;
+      padding: 34px;
+      background: #f7faf9;
       color: #101828;
       line-height: 1.7;
     }
     .hero {
+      position: relative;
+      overflow: hidden;
       display: grid;
-      grid-template-columns: 1.5fr 0.95fr;
-      gap: 20px;
-      border-radius: 24px;
-      padding: 28px;
+      grid-template-columns: 1.55fr 0.65fr;
+      gap: 18px;
+      min-height: 320px;
+      padding: 32px;
+      border-radius: 28px;
+      background: #064E3B;
       color: #ffffff;
-      margin-bottom: 24px;
+      margin-bottom: 22px;
+      box-shadow: 0 14px 34px rgba(6, 78, 59, 0.18);
     }
-    .hero-api { background: #0f766e; }
-    .hero-support { background: #064E3B; }
-    .hero-hr { background: #059669; }
-    .eyebrow {
+    .hero::after {
+      content: '';
+      position: absolute;
+      width: 230px;
+      height: 230px;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 50%;
+      left: -90px;
+      bottom: -120px;
+    }
+    .hero-content { position: relative; z-index: 2; }
+    .hero-logo { width: 150px; height: auto; object-fit: contain; margin-bottom: 20px; }
+    .hero-badge {
       display: inline-block;
-      margin-bottom: 12px;
-      padding: 5px 12px;
+      padding: 5px 11px;
+      border: 1px solid rgba(255,255,255,0.2);
       border-radius: 999px;
-      background: rgba(255,255,255,0.16);
-      font-size: 11px;
-      font-weight: 700;
-    }
-    .hero-main h1 {
-      font-size: 28px;
-      line-height: 1.45;
+      background: rgba(255,255,255,0.08);
+      color: #d1fae5;
+      font-size: 10px;
       font-weight: 800;
-      margin-bottom: 8px;
+      direction: ltr;
+      text-align: center;
+      margin-bottom: 10px;
     }
-    .hero-main p {
-      font-size: 14px;
-      opacity: 0.92;
-      line-height: 1.9;
-    }
-    .hero-summary {
-      background: rgba(255,255,255,0.1);
-      border: 1px solid rgba(255,255,255,0.14);
-      border-radius: 18px;
-      padding: 18px;
-      align-self: start;
-    }
-    .summary-row {
-      margin-bottom: 12px;
-    }
-    .summary-row:last-child {
-      margin-bottom: 0;
-    }
-    .summary-row span {
-      display: block;
-      font-size: 11px;
-      opacity: 0.75;
-      margin-bottom: 2px;
-    }
-    .summary-row strong {
-      display: block;
-      font-size: 15px;
-      line-height: 1.7;
-    }
-    .warning {
-      background: #fff7ed;
-      border: 1px solid #fdba74;
-      color: #9a3412;
-      border-radius: 18px;
-      padding: 18px 20px;
-      margin-bottom: 20px;
-    }
-    .warning-title {
-      font-size: 15px;
-      font-weight: 800;
-      margin-bottom: 6px;
-    }
-    .warning p {
-      font-size: 13px;
-      line-height: 1.9;
-    }
-    .panel {
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 18px;
-      padding: 22px;
-      margin-bottom: 18px;
-    }
-    .section-title {
-      font-size: 18px;
-      font-weight: 800;
-      color: #0f172a;
-      margin-bottom: 12px;
-    }
-    .section-copy {
-      font-size: 13px;
-      color: #475569;
-      margin-bottom: 14px;
-      line-height: 1.9;
-    }
-    .info-grid {
+    .hero h1 { font-size: 29px; line-height: 1.42; font-weight: 800; margin-bottom: 10px; max-width: 500px; }
+    .hero p { font-size: 13px; line-height: 1.9; color: #d8eee7; max-width: 520px; }
+    .hero-meta {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 8px 18px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,0.14);
     }
-    .info-card {
+    .hero-meta span { display: block; font-size: 9px; color: #a7cfc2; margin-bottom: 2px; }
+    .hero-meta strong { display: block; font-size: 12px; color: #ffffff; font-weight: 700; }
+    .hero-character {
+      position: relative;
+      z-index: 2;
+      min-height: 255px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .mascot-glow {
+      position: absolute;
+      width: 170px;
+      height: 170px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .hero-mascot {
+      position: relative;
+      z-index: 2;
+      width: 135px;
+      max-height: 180px;
+      object-fit: contain;
+      filter: drop-shadow(0 14px 12px rgba(0,0,0,0.18));
+      margin-bottom: 10px;
+    }
+    .hero-stamp { font-size: 12px; font-weight: 900; letter-spacing: 1px; direction: ltr; text-align: center; }
+    .hero-stamp-sub { font-size: 6px; color: #a7cfc2; letter-spacing: 0.8px; direction: ltr; text-align: center; }
+    .panel {
       background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 14px;
-      padding: 14px;
-      min-height: 82px;
+      border: 1px solid #dce8e4;
+      border-radius: 20px;
+      padding: 22px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 14px rgba(15, 46, 39, 0.035);
     }
-    .info-label {
-      font-size: 11px;
-      color: #64748b;
-      margin-bottom: 6px;
-      font-weight: 700;
-    }
-    .info-value {
-      font-size: 13px;
-      color: #0f172a;
-      line-height: 1.8;
-      word-break: break-word;
-    }
-    .code-label {
-      font-size: 12px;
-      color: #64748b;
-      font-weight: 700;
-      margin: 14px 0 6px;
-    }
+    .compact-panel { padding-bottom: 18px; }
+    .section-kicker { color: #0f766e; font-size: 9px; font-weight: 900; letter-spacing: 1px; direction: ltr; text-align: right; margin-bottom: 3px; }
+    .section-title { font-size: 18px; font-weight: 800; color: #10231f; margin-bottom: 13px; }
+    .section-copy { font-size: 12.5px; color: #52635e; margin-bottom: 14px; line-height: 1.9; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+    .info-card { background: #f9fbfa; border: 1px solid #e0e9e6; border-radius: 14px; padding: 14px; min-height: 78px; }
+    .info-card.accent { border-color: #b7ded1; background: #f0faf6; }
+    .info-label { font-size: 10px; color: #71807b; margin-bottom: 5px; font-weight: 700; }
+    .info-value { font-size: 12.5px; color: #13231f; line-height: 1.75; word-break: break-word; }
+    .mono { font-family: 'Courier New', monospace !important; font-size: 10px; }
+    .security-note { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: #f0fdf4; border: 1px solid #d2f0dc; color: #276749; font-size: 11px; line-height: 1.8; }
+    .warning { display: flex; flex-direction: column; gap: 4px; background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; border-radius: 16px; padding: 14px 16px; margin-bottom: 16px; font-size: 12px; }
+    .code-label { font-size: 11px; color: #65756f; font-weight: 800; margin: 13px 0 6px; direction: ltr; text-align: left; }
     pre {
-      background: #0f172a;
-      color: #e2e8f0;
+      background: #10231f;
+      color: #d7eee6;
+      border: 1px solid #183b32;
       border-radius: 14px;
-      padding: 16px;
-      font-size: 11px;
-      line-height: 1.8;
+      padding: 15px;
+      font-family: 'Courier New', monospace !important;
+      font-size: 10px;
+      line-height: 1.75;
       white-space: pre-wrap;
       overflow-wrap: anywhere;
+      direction: ltr !important;
+      text-align: left !important;
     }
-    .ltr,
-    pre,
-    .code-label {
-      direction: ltr;
-      text-align: left;
-    }
-    .steps {
+    .ltr { direction: ltr !important; text-align: left !important; unicode-bidi: embed !important; }
+    .steps, .bullet-list { display: flex; flex-direction: column; gap: 9px; }
+    .step { display: grid; grid-template-columns: 36px 1fr; align-items: start; gap: 10px; background: #f9fbfa; border: 1px solid #e0e9e6; border-radius: 13px; padding: 11px 12px; font-size: 12px; color: #21332d; }
+    .step b { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; background: #064E3B; color: #ffffff; font-size: 10px; direction: ltr; }
+    .bullet { position: relative; background: #f9fbfa; border: 1px solid #e0e9e6; border-radius: 13px; padding: 11px 14px 11px 34px; font-size: 12px; color: #263833; }
+    .bullet::before { content: '✓'; position: absolute; left: 12px; top: 10px; width: 17px; height: 17px; display: grid; place-items: center; border-radius: 50%; background: #dcfce7; color: #047857; font-size: 10px; font-weight: 900; }
+    .template-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .template-card { border: 1px solid #dce8e4; border-radius: 14px; background: #f9fbfa; padding: 13px 15px; }
+    .template-title { font-size: 12px; font-weight: 800; color: #10231f; margin-bottom: 6px; }
+    .template-body { font-size: 12px; line-height: 1.85; color: #3b5049; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .feature { min-height: 100px; padding: 13px; border-radius: 14px; border: 1px solid #dce8e4; background: #f9fbfa; }
+    .feature b { display: inline-block; color: #0f766e; font-size: 9px; direction: ltr; margin-bottom: 5px; }
+    .feature strong { display: block; font-size: 12px; color: #13231f; margin-bottom: 4px; }
+    .feature span { display: block; font-size: 11px; color: #667770; line-height: 1.75; }
+    .package-footer {
       display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .step,
-    .bullet {
-      background: #ffffff;
-      border: 1px solid #e2e8f0;
-      border-radius: 14px;
-      padding: 12px 14px;
-      font-size: 13px;
-      line-height: 1.9;
-      color: #1e293b;
-    }
-    .bullet-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .template-grid {
-      display: grid;
-      grid-template-columns: 1fr;
+      align-items: center;
       gap: 12px;
-      margin-top: 14px;
+      padding: 16px 4px 4px;
+      border-top: 1px solid #dce8e4;
+      margin-top: 8px;
+      color: #5f706a;
     }
-    .template-card {
-      border: 1px solid #e2e8f0;
-      border-radius: 16px;
-      background: #f8fafc;
-      padding: 14px 16px;
-    }
-    .template-title {
-      font-size: 13px;
-      font-weight: 800;
-      color: #0f172a;
-      margin-bottom: 8px;
-    }
-    .template-body {
-      font-size: 13px;
-      line-height: 1.9;
-      color: #334155;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-    }
+    .package-footer img { width: 86px; height: auto; object-fit: contain; }
+    .package-footer strong { display: block; color: #064E3B; font-size: 11px; direction: ltr; text-align: right; }
+    .package-footer span { display: block; font-size: 9px; }
+    .footer-site { margin-right: auto; direction: ltr !important; text-align: left !important; font-size: 10px; color: #0f766e; }
   `;
 }
 
 function buildContent(input: ExportPackageInput) {
   switch (input.type) {
-    case 'support':
-      return buildSupportTemplate(input);
-    case 'hr':
-      return buildHrTemplate(input);
+    case 'support': return buildSupportTemplate(input);
+    case 'hr': return buildHrTemplate(input);
     case 'api':
-    default:
-      return buildApiTemplate(input);
+    default: return buildApiTemplate(input);
   }
 }
 
@@ -595,51 +493,50 @@ function splitBlocksIntoPages(blocks: HTMLElement[], maxPageHeight: number) {
 
   blocks.forEach((block) => {
     const styles = window.getComputedStyle(block);
-    const blockHeight =
-      block.offsetHeight +
-      parseFloat(styles.marginTop || '0') +
-      parseFloat(styles.marginBottom || '0');
-
+    const blockHeight = block.offsetHeight + parseFloat(styles.marginTop || '0') + parseFloat(styles.marginBottom || '0');
     if (currentPage.length > 0 && currentHeight + blockHeight > maxPageHeight) {
       pages.push(currentPage);
       currentPage = [block];
       currentHeight = blockHeight;
       return;
     }
-
     currentPage.push(block);
     currentHeight += blockHeight;
   });
 
-  if (currentPage.length > 0) {
-    pages.push(currentPage);
-  }
-
+  if (currentPage.length > 0) pages.push(currentPage);
   return pages;
 }
 
-async function renderPageCanvas(
-  stage: HTMLElement,
-  sourceShell: HTMLElement,
-  blocks: HTMLElement[],
-) {
+async function waitForImages(root: ParentNode) {
+  const images = Array.from(root.querySelectorAll('img')) as HTMLImageElement[];
+  await Promise.all(images.map((img) => {
+    if (img.complete && img.naturalWidth > 0) return Promise.resolve();
+    return new Promise<void>((resolve) => {
+      const done = () => resolve();
+      img.addEventListener('load', done, { once: true });
+      img.addEventListener('error', done, { once: true });
+    });
+  }));
+}
+
+async function renderPageCanvas(stage: HTMLElement, sourceShell: HTMLElement, blocks: HTMLElement[]) {
   stage.innerHTML = `<style>${buildStyles()}</style>`;
   const pageShell = sourceShell.cloneNode(false) as HTMLElement;
   pageShell.innerHTML = '';
-  blocks.forEach((block) => {
-    pageShell.appendChild(block.cloneNode(true));
-  });
+  blocks.forEach((block) => pageShell.appendChild(block.cloneNode(true)));
   stage.appendChild(pageShell);
 
   await document.fonts.ready;
-  await new Promise((resolve) => setTimeout(resolve, 80));
+  await waitForImages(stage);
+  await new Promise((resolve) => setTimeout(resolve, 100));
 
   return html2canvas(stage, {
     scale: 2,
     useCORS: true,
-    allowTaint: true,
+    allowTaint: false,
     logging: false,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#f7faf9',
     windowWidth: 794,
   });
 }
@@ -651,20 +548,16 @@ export async function exportClientPackagePdf(input: ExportPackageInput) {
   measurementHost.style.left = '0';
   measurementHost.style.width = '794px';
   measurementHost.style.zIndex = '-1';
-  measurementHost.innerHTML = `
-    <style>${buildStyles()}</style>
-    ${buildContent(input)}
-  `;
-
+  measurementHost.innerHTML = `<style>${buildStyles()}</style>${buildContent(input)}`;
   document.body.appendChild(measurementHost);
+
   await document.fonts.ready;
-  await new Promise((resolve) => setTimeout(resolve, 900));
+  await waitForImages(measurementHost);
+  await new Promise((resolve) => setTimeout(resolve, 150));
 
   try {
     const shell = measurementHost.querySelector('.package-shell') as HTMLElement | null;
-    if (!shell) {
-      throw new Error('Unable to prepare PDF content');
-    }
+    if (!shell) throw new Error('Unable to prepare PDF content');
 
     const blocks = Array.from(shell.children) as HTMLElement[];
     const pageGroups = splitBlocksIntoPages(blocks, getPageRenderHeight(794));
@@ -688,13 +581,9 @@ export async function exportClientPackagePdf(input: ExportPackageInput) {
         const renderWidth = canvas.width * ratio;
         const renderHeight = canvas.height * ratio;
         const x = (pageWidth - renderWidth) / 2;
-        const y = 0;
 
-        if (index > 0) {
-          pdf.addPage();
-        }
-
-        pdf.addImage(image, 'PNG', x, y, renderWidth, renderHeight);
+        if (index > 0) pdf.addPage();
+        pdf.addImage(image, 'PNG', x, 0, renderWidth, renderHeight);
       }
     } finally {
       document.body.removeChild(renderStage);

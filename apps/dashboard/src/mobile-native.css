@@ -1,0 +1,324 @@
+/* VAYRO mobile application layer — shared native-like behavior across routed pages. */
+
+@media (max-width: 768px) {
+  .mobile-global-back {
+    order: -1;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border: 0;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-main);
+    color: var(--text-main);
+    cursor: pointer;
+    box-shadow: inset 0 0 0 1px var(--border-soft);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-global-back:active { transform: scale(.94); }
+
+  .mobile-notification-btn {
+    position: relative;
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 12px;
+    border: 1px solid var(--border-soft);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-card);
+    color: var(--text-main);
+    cursor: pointer;
+  }
+
+  .mobile-notification-btn.is-enabled { color: var(--brand-primary); }
+
+  .mobile-notification-dot {
+    position: absolute;
+    top: 6px;
+    inset-inline-start: 6px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--brand-accent);
+    border: 1.5px solid var(--bg-card);
+  }
+
+  /* The chat thread has its own back action because list/thread share one route. */
+  body.chat-open .inbox-back-btn {
+    display: flex !important;
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    border-radius: 50% !important;
+    background: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(17,27,33,.12) !important;
+    color: #111b21 !important;
+    border: 1px solid rgba(17,27,33,.07) !important;
+    margin-inline-end: 2px !important;
+  }
+
+  body.chat-open .inbox-back-btn:active { transform: scale(.94); }
+
+  /* Give every routed page consistent phone spacing without fighting inbox full-screen mode. */
+  body:not(.chat-open) .page-stack {
+    padding: .9rem .85rem 1.15rem !important;
+    gap: .9rem !important;
+  }
+
+  body:not(.chat-open) .page-stack > .card,
+  body:not(.chat-open) .page-stack > section.card {
+    border-radius: 18px !important;
+  }
+
+  /* Touch targets: only common app buttons, not every inline icon. */
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost {
+    min-height: 42px;
+  }
+
+  /* Prevent iOS zoom on form controls while preserving desktop typography. */
+  input,
+  select,
+  textarea { font-size: 16px; }
+}
+
+.mobile-welcome-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(4, 24, 18, .48);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: 18px 12px max(12px, env(safe-area-inset-bottom));
+}
+
+.mobile-welcome-sheet {
+  position: relative;
+  width: min(100%, 520px);
+  background: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--border-soft);
+  border-radius: 28px;
+  padding: 18px 18px 20px;
+  box-shadow: 0 28px 80px rgba(4, 24, 18, .28);
+  animation: vayro-sheet-in .3s cubic-bezier(.22,.8,.3,1);
+}
+
+@keyframes vayro-sheet-in {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.mobile-welcome-close {
+  position: absolute;
+  top: 14px;
+  inset-inline-start: 14px;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--bg-main);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.mobile-welcome-progress {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 2px 0 16px;
+}
+.mobile-welcome-progress span {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--border-medium);
+  transition: all .2s ease;
+}
+.mobile-welcome-progress span.active {
+  width: 22px;
+  background: var(--brand-primary);
+}
+
+.mobile-welcome-content {
+  min-height: 330px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+  padding: 8px 8px 10px;
+}
+
+.mobile-welcome-content h2 {
+  font-size: 1.35rem;
+  line-height: 1.45;
+  margin: 0;
+}
+.mobile-welcome-content p {
+  max-width: 390px;
+  font-size: .9rem;
+  line-height: 1.9;
+  color: var(--text-muted);
+}
+
+.mobile-welcome-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--brand-primary-soft);
+  color: var(--brand-primary);
+  font-size: .69rem;
+  font-weight: 800;
+  letter-spacing: .03em;
+}
+
+.mobile-welcome-feature-icon {
+  width: 84px;
+  height: 84px;
+  border-radius: 26px;
+  background: var(--brand-primary-soft);
+  color: var(--brand-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 0 1px var(--border-brand);
+  margin-bottom: 4px;
+}
+
+.mobile-welcome-primary,
+.mobile-welcome-secondary {
+  width: 100%;
+  min-height: 48px;
+  border-radius: 15px;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: .9rem;
+  cursor: pointer;
+}
+.mobile-welcome-primary {
+  border: 0;
+  background: var(--brand-primary);
+  color: var(--on-brand);
+  box-shadow: var(--shadow-brand);
+}
+.mobile-welcome-secondary {
+  width: auto;
+  min-width: 190px;
+  padding: 0 18px;
+  border: 1px solid var(--border-brand);
+  background: var(--brand-primary-soft);
+  color: var(--brand-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.mobile-welcome-success,
+.mobile-welcome-muted,
+.mobile-welcome-cache-note {
+  border-radius: 13px;
+  padding: 10px 12px;
+  font-size: .78rem;
+  line-height: 1.7;
+}
+.mobile-welcome-success {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--success-soft);
+  color: var(--success);
+  font-weight: 700;
+}
+.mobile-welcome-muted {
+  background: var(--bg-main);
+  color: var(--text-muted);
+}
+.mobile-welcome-cache-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  text-align: right;
+  background: var(--bg-main);
+  border: 1px solid var(--border-soft);
+  color: var(--text-muted);
+  max-width: 390px;
+}
+.mobile-welcome-cache-note svg { flex: 0 0 auto; margin-top: 2px; }
+
+.vayro-live-notice {
+  position: fixed;
+  top: calc(env(safe-area-inset-top) + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 4800;
+  width: min(440px, calc(100vw - 24px));
+  border: 1px solid var(--border-soft);
+  background: color-mix(in srgb, var(--bg-card) 94%, transparent);
+  color: var(--text-main);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 18px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: right;
+  cursor: pointer;
+  box-shadow: 0 14px 40px rgba(4, 24, 18, .18);
+  animation: vayro-notice-in .24s cubic-bezier(.22,.8,.3,1);
+}
+
+@keyframes vayro-notice-in {
+  from { opacity: 0; transform: translate(-50%, -12px) scale(.98); }
+  to { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+.vayro-live-notice-icon {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 12px;
+  background: var(--brand-primary);
+  color: var(--on-brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.vayro-live-notice-copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.vayro-live-notice-copy strong { font-size: .82rem; }
+.vayro-live-notice-copy small {
+  font-size: .74rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (min-width: 769px) {
+  .mobile-welcome-overlay,
+  .mobile-global-back,
+  .mobile-notification-btn { display: none !important; }
+}

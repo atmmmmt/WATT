@@ -1,8 +1,13 @@
-import { lazy, Suspense } from 'react';
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { BrowserRouter, Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { Server } from 'lucide-react';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { SidebarLayout } from './components/SidebarLayout';
+import { MobileExperience } from './components/MobileExperience';
+import { ResponsiveRouteBridge } from './components/ResponsiveRouteBridge';
+import { CommandCenter } from './components/CommandCenter';
 import { useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/LoginPage';
 
@@ -12,6 +17,7 @@ import { LoginPage } from './pages/LoginPage';
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage').then(m => ({ default: m.ForgotPasswordPage })));
 const SetPasswordPage = lazy(() => import('./pages/SetPasswordPage').then(m => ({ default: m.SetPasswordPage })));
 const DashboardPage = lazy(() => import('./pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
+const ServerStatusPage = lazy(() => import('./pages/ServerStatusPage').then(m => ({ default: m.ServerStatusPage })));
 const OtpLogsPage = lazy(() => import('./pages/OtpLogsPage').then(m => ({ default: m.OtpLogsPage })));
 const HrOverviewPage = lazy(() => import('./pages/HrOverviewPage').then(m => ({ default: m.HrOverviewPage })));
 const HrJobsPage = lazy(() => import('./pages/HrJobsPage').then(m => ({ default: m.HrJobsPage })));
@@ -35,13 +41,35 @@ const TenantHomePage = lazy(() => import('./pages/TenantHomePage').then(m => ({ 
 const LandingEditorPage = lazy(() => import('./pages/LandingEditorPage').then(m => ({ default: m.LandingEditorPage })));
 const LandingOrdersPage = lazy(() => import('./pages/LandingOrdersPage').then(m => ({ default: m.LandingOrdersPage })));
 
+/**
+ * A content-shaped loader prevents the UI from feeling frozen while a lazy route
+ * is downloading. It deliberately mirrors the real dashboard hierarchy rather
+ * than showing an indefinite spinner in the middle of an empty screen.
+ */
 function PageLoader() {
   return (
-    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '3rem', minHeight: '50vh' }}>
-      <div
-        className="animate-spin"
-        style={{ width: 28, height: 28, border: '3px solid var(--brand-primary)', borderTopColor: 'transparent', borderRadius: '50%' }}
-      />
+    <div className="vayro-route-loader" role="status" aria-label="جارٍ تجهيز الصفحة">
+      <div className="vayro-route-loader-head" aria-hidden="true">
+        <div className="vayro-route-loader-copy">
+          <div className="vayro-skeleton kicker" />
+          <div className="vayro-skeleton title" />
+        </div>
+        <div className="vayro-skeleton action" />
+      </div>
+      <div className="vayro-route-loader-grid" aria-hidden="true">
+        {[0, 1, 2, 3].map((item) => (
+          <div className="vayro-loader-card" key={item}>
+            <div className="vayro-skeleton" />
+            <div className="vayro-skeleton" />
+          </div>
+        ))}
+      </div>
+      <div className="vayro-route-loader-panel" aria-hidden="true">
+        <div className="vayro-skeleton" />
+        <div className="vayro-skeleton" />
+        <div className="vayro-skeleton" />
+        <div className="vayro-skeleton" />
+      </div>
     </div>
   );
 }
@@ -72,12 +100,54 @@ function HomePage() {
   return <DashboardPage />;
 }
 
+/**
+ * Keep infrastructure navigation owned by the routed shell instead of by a
+ * one-off server patch. This intentionally portals into the existing sidebar
+ * nav so the entry survives every production rebuild / auto deploy.
+ */
+function ServerStatusSidebarLink() {
+  const { user } = useAuth();
+  const [target, setTarget] = useState<HTMLElement | null>(null);
 
-/** Page-to-page transition: a short fade + lift, like a native app pushing a screen. */
+  useEffect(() => {
+    if (user?.role !== 'super_admin') {
+      setTarget(null);
+      return;
+    }
+
+    let cancelled = false;
+    const findNav = () => {
+      if (cancelled) return;
+      const nav = document.querySelector<HTMLElement>('.sidebar .nav-group');
+      if (nav) setTarget(nav);
+      else window.requestAnimationFrame(findNav);
+    };
+    findNav();
+    return () => { cancelled = true; };
+  }, [user?.role]);
+
+  if (user?.role !== 'super_admin' || !target) return null;
+
+  return createPortal(
+    <div data-vayro-server-status-nav="true">
+      <div className="nav-group-label">النظام</div>
+      <NavLink
+        to="/server-status"
+        className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}
+      >
+        <Server size={18} />
+        <span>حالة السيرفر</span>
+      </NavLink>
+    </div>,
+    target,
+  );
+}
+
+/** Page-to-page transition: subtle depth, quick exit, calm landing. */
 function RouteTransition({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const prefersReducedMotion = useReducedMotion();
-  // The inbox owns the whole screen and has its own gestures — don't animate over it.
+  // The support inbox owns the whole screen and has its own gestures/realtime updates.
   const isInbox = location.pathname.startsWith('/support/inbox');
 
   if (prefersReducedMotion || isInbox) return <>{children}</>;
@@ -86,11 +156,24 @@ function RouteTransition({ children }: { children: React.ReactNode }) {
     <AnimatePresence mode="wait" initial={false}>
       <motion.div
         key={location.pathname}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -6 }}
-        transition={{ duration: 0.18, ease: [0.32, 0.72, 0, 1] }}
-        style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}
+        className="vayro-route-frame"
+        initial={{ opacity: 0, y: 10, scale: 0.996, filter: 'blur(2px)' }}
+        animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+        exit={{ opacity: 0, y: -4, scale: 0.998, filter: 'blur(1px)' }}
+        transition={{
+          opacity: { duration: 0.2, ease: 'easeOut' },
+          y: { duration: 0.28, ease: [0.22, 1, 0.36, 1] },
+          scale: { duration: 0.28, ease: [0.22, 1, 0.36, 1] },
+          filter: { duration: 0.18, ease: 'easeOut' },
+        }}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          flex: 1,
+          minHeight: 0,
+          transformOrigin: '50% 12%',
+          willChange: 'transform, opacity, filter',
+        }}
       >
         {children}
       </motion.div>
@@ -101,32 +184,37 @@ function RouteTransition({ children }: { children: React.ReactNode }) {
 function AppShell() {
   return (
     <SidebarLayout>
+      <MobileExperience />
+      <ResponsiveRouteBridge />
+      <ServerStatusSidebarLink />
+      <CommandCenter />
       <Suspense fallback={<PageLoader />}>
         <RouteTransition>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/tenants" element={<TenantsPage />} />
-          <Route path="/packages" element={<PackagesPage />} />
-          <Route path="/finance" element={<FinancePage />} />
-          <Route path="/landing-editor" element={<LandingEditorPage />} />
-          <Route path="/landing-orders" element={<LandingOrdersPage />} />
-          <Route path="/home" element={<TenantHomePage />} />
-          <Route path="/otp/workspace" element={<OtpWorkspacePage />} />
-          <Route path="/otp/templates" element={<OtpTemplatesPage />} />
-          <Route path="/api-keys" element={<ApiKeysPage />} />
-          <Route path="/otp-logs" element={<OtpLogsPage />} />
-          <Route path="/hr" element={<HrOverviewPage />} />
-          <Route path="/hr/jobs" element={<HrJobsPage />} />
-          <Route path="/hr/inbox" element={<HrInboxPage />} />
-          <Route path="/hr/templates" element={<HrTemplatesPage />} />
-          <Route path="/hr/reports" element={<HrReportsPage />} />
-          <Route path="/support/connection" element={<SupportConnectionPage />} />
-          <Route path="/support/inbox" element={<SupportInboxPage />} />
-          <Route path="/support/employees" element={<SupportEmployeesPage />} />
-          <Route path="/support/reports" element={<SupportReportsPage />} />
-          <Route path="/support/settings" element={<SupportSettingsPage />} />
-          <Route path="/doctor-relay/links" element={<DoctorRelayLinksPage />} />
-        </Routes>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/server-status" element={<ServerStatusPage />} />
+            <Route path="/tenants" element={<TenantsPage />} />
+            <Route path="/packages" element={<PackagesPage />} />
+            <Route path="/finance" element={<FinancePage />} />
+            <Route path="/landing-editor" element={<LandingEditorPage />} />
+            <Route path="/landing-orders" element={<LandingOrdersPage />} />
+            <Route path="/home" element={<TenantHomePage />} />
+            <Route path="/otp/workspace" element={<OtpWorkspacePage />} />
+            <Route path="/otp/templates" element={<OtpTemplatesPage />} />
+            <Route path="/api-keys" element={<ApiKeysPage />} />
+            <Route path="/otp-logs" element={<OtpLogsPage />} />
+            <Route path="/hr" element={<HrOverviewPage />} />
+            <Route path="/hr/jobs" element={<HrJobsPage />} />
+            <Route path="/hr/inbox" element={<HrInboxPage />} />
+            <Route path="/hr/templates" element={<HrTemplatesPage />} />
+            <Route path="/hr/reports" element={<HrReportsPage />} />
+            <Route path="/support/connection" element={<SupportConnectionPage />} />
+            <Route path="/support/inbox" element={<SupportInboxPage />} />
+            <Route path="/support/employees" element={<SupportEmployeesPage />} />
+            <Route path="/support/reports" element={<SupportReportsPage />} />
+            <Route path="/support/settings" element={<SupportSettingsPage />} />
+            <Route path="/doctor-relay/links" element={<DoctorRelayLinksPage />} />
+          </Routes>
         </RouteTransition>
       </Suspense>
     </SidebarLayout>

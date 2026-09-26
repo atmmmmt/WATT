@@ -1,0 +1,82 @@
+name: Deploy VAYRO Production
+
+on:
+  push:
+    branches:
+      - feat/baileys-gateway
+  workflow_dispatch:
+
+concurrency:
+  group: vayro-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Prepare SSH
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s' "$VPS_SSH_KEY" | base64 --decode > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keygen -y -f ~/.ssh/id_ed25519 >/dev/null
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts
+
+      - name: Deploy on VAYRO server
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/id_ed25519 "${VPS_USER}@${VPS_HOST}" 'bash -se' <<'REMOTE'
+          set -euo pipefail
+
+          cd /var/www/vayro
+
+          echo "==> Pull latest VAYRO code"
+          git fetch origin feat/baileys-gateway
+          git reset --hard origin/feat/baileys-gateway
+
+          echo "==> Install dependencies"
+          npm install --no-audit --no-fund
+
+          echo "==> Build API"
+          npm run build --workspace @waotp/api
+
+          echo "==> Build dashboard"
+          VITE_API_BASE_URL=https://api.vayro-wa.com npm run build --workspace @waotp/dashboard
+
+          echo "==> Build landing"
+          cd /var/www/vayro/frontend
+          VITE_API_BASE_URL=https://api.vayro-wa.com VITE_SITE_URL=https://vayro-wa.com npm run build
+          cd /var/www/vayro
+
+          echo "==> Publish frontends"
+          rm -rf /var/www/vayro-dashboard/*
+          cp -a apps/dashboard/dist/. /var/www/vayro-dashboard/
+          rm -rf /var/www/vayro-landing/*
+          cp -a frontend/dist/. /var/www/vayro-landing/
+          chown -R www-data:www-data /var/www/vayro-dashboard /var/www/vayro-landing
+
+          echo "==> Load production secrets and restart API"
+          if [ -f /etc/vayro/production-secrets.env ]; then
+            set -a
+            . /etc/vayro/production-secrets.env
+            set +a
+          fi
+          pm2 restart vayro-api --update-env
+          pm2 save
+
+          echo "==> Verify services"
+          pm2 describe vayro-api >/dev/null
+          curl -fsS --retry 5 --retry-delay 2 https://app.vayro-wa.com/ >/dev/null
+          curl -fsS --retry 5 --retry-delay 2 https://vayro-wa.com/ >/dev/null
+
+          echo "VAYRO production deployment completed successfully."
+          REMOTE

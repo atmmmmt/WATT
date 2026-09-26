@@ -1,0 +1,562 @@
+/* VAYRO support inbox — WhatsApp-like responsive polish */
+
+/* Inbox-specific surface tokens. Keeping these separate from the generic dashboard
+   tokens lets the chat feel like a messaging app in both themes without hardcoded
+   light-only islands. */
+.inbox-container {
+  --wa-list-bg: #ffffff;
+  --wa-list-hover: #f5f7f6;
+  --wa-list-selected: #eaf6f2;
+  --wa-header-bg: #f7f9f8;
+  --wa-chat-bg: #efeae2;
+  --wa-composer-bg: #f0f2f5;
+  --wa-input-bg: #ffffff;
+  --wa-incoming-bg: #ffffff;
+  --wa-outgoing-bg: #d9fdd3;
+  --wa-outgoing-text: #111b21;
+  --wa-separator: #dfe5e2;
+  --wa-soft-border: #e8ecea;
+  --wa-chip-bg: rgba(255,255,255,.94);
+  --wa-icon: #54656f;
+  --wa-note-bg: #fffbeb;
+  --wa-note-border: #fcd34d88;
+  --wa-note-text: #78350f;
+  --wa-note-muted: #a16207;
+  height: 100% !important;
+  min-height: 0;
+  background: var(--wa-chat-bg);
+  color: var(--text-main);
+}
+
+[data-theme='dark'] .inbox-container {
+  /* WhatsApp-dark-inspired surfaces, adjusted toward VAYRO's green identity. */
+  --wa-list-bg: #111b21;
+  --wa-list-hover: #202c33;
+  --wa-list-selected: #182f2b;
+  --wa-header-bg: #202c33;
+  --wa-chat-bg: #0b141a;
+  --wa-composer-bg: #202c33;
+  --wa-input-bg: #2a3942;
+  --wa-incoming-bg: #202c33;
+  --wa-outgoing-bg: #005c4b;
+  --wa-outgoing-text: #e9edef;
+  --wa-separator: #26343c;
+  --wa-soft-border: #202c33;
+  --wa-chip-bg: #182229;
+  --wa-icon: #aebac1;
+  --wa-note-bg: #3a2d13;
+  --wa-note-border: #8a641f;
+  --wa-note-text: #fde68a;
+  --wa-note-muted: #fbbf24;
+}
+
+.inbox-aside {
+  width: 360px !important;
+  min-width: 320px;
+  background: var(--wa-list-bg) !important;
+  border-left: 1px solid var(--wa-separator) !important;
+  color: var(--text-main);
+}
+
+.inbox-main {
+  min-width: 0;
+  background: var(--wa-chat-bg) !important;
+  color: var(--text-main);
+}
+
+.inbox-main > header {
+  min-height: 68px;
+  padding: 0.7rem 1rem !important;
+  background: var(--wa-header-bg) !important;
+  border-bottom: 1px solid var(--wa-separator) !important;
+  box-shadow: 0 1px 2px rgba(15, 46, 39, 0.04);
+  color: var(--text-main);
+}
+
+.inbox-main > header button {
+  color: var(--text-main);
+}
+
+.inbox-details {
+  width: 300px !important;
+  background: var(--wa-list-bg) !important;
+  border-right: 1px solid var(--wa-separator) !important;
+  color: var(--text-main);
+}
+
+/* Conversation list */
+.inbox-aside > div:first-child {
+  background: var(--wa-list-bg) !important;
+  border-color: var(--wa-separator) !important;
+}
+
+.inbox-aside > div:last-child {
+  background: var(--wa-list-bg) !important;
+}
+
+.inbox-aside input,
+.inbox-details input,
+.inbox-details select,
+.inbox-details textarea {
+  background: var(--wa-input-bg) !important;
+  color: var(--text-main) !important;
+  border-color: var(--wa-separator) !important;
+}
+
+.inbox-aside input::placeholder,
+.inbox-details input::placeholder,
+.inbox-details textarea::placeholder,
+.chat-composer textarea::placeholder {
+  color: var(--text-faint) !important;
+  opacity: 1;
+}
+
+/* Filter buttons are inline-styled in the page; these rules make their neutral and
+   active states theme-aware without changing their behaviour. */
+[data-theme='dark'] .inbox-aside > div:first-child button {
+  background: #182229 !important;
+  color: #aebac1 !important;
+  border-color: #2a3942 !important;
+}
+
+[data-theme='dark'] .inbox-aside > div:first-child button[style*="background: none"] {
+  background: transparent !important;
+  color: #aebac1 !important;
+}
+
+[data-theme='dark'] .inbox-aside > div:first-child button[style*="background: var(--brand-primary)"] {
+  background: #00a884 !important;
+  color: #06251d !important;
+  border-color: #00a884 !important;
+}
+
+[data-theme='dark'] .inbox-aside > div:first-child button[style*="background: var(--brand-primary-soft)"] {
+  background: rgba(0,168,132,.14) !important;
+  color: #34d399 !important;
+  border-color: #00a884 !important;
+}
+
+.conv-item {
+  min-height: 74px;
+  padding: 0.78rem 0.9rem !important;
+  border-bottom: 1px solid var(--wa-soft-border) !important;
+  background: var(--wa-list-bg) !important;
+  color: var(--text-main);
+}
+
+.conv-item:hover {
+  background: var(--wa-list-hover) !important;
+}
+
+.conv-item[style*="var(--brand-primary-soft)"] {
+  background: var(--wa-list-selected) !important;
+}
+
+.conv-item[style*="var(--brand-primary-soft)"] > div span:first-child {
+  color: var(--brand-primary) !important;
+}
+
+.conv-item[style*="background"] {
+  transition: background 120ms ease, box-shadow 120ms ease;
+}
+
+/* Chat timeline */
+.chat-scroll {
+  background-color: var(--wa-chat-bg) !important;
+  padding: 1.35rem clamp(1rem, 2.2vw, 2.25rem) 1.5rem !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(6, 78, 59, 0.25) transparent;
+  color: var(--text-main);
+}
+
+.chat-scroll::-webkit-scrollbar { width: 7px; }
+.chat-scroll::-webkit-scrollbar-thumb {
+  background: rgba(6, 78, 59, 0.22);
+  border-radius: 999px;
+}
+
+[data-theme='dark'] .chat-scroll {
+  scrollbar-color: rgba(134,150,160,.32) transparent;
+}
+
+[data-theme='dark'] .chat-scroll::-webkit-scrollbar-thumb {
+  background: rgba(134,150,160,.28);
+}
+
+/* Message bubbles currently use inline styles. First normalize every bubble as incoming,
+   then override the outgoing bubble based on the brand-primary inline marker. */
+.chat-scroll [style*="max-width: 70%"] {
+  max-width: min(72%, 660px) !important;
+  background: var(--wa-incoming-bg) !important;
+  color: var(--text-main) !important;
+  border: 1px solid color-mix(in srgb, var(--wa-separator) 70%, transparent) !important;
+  box-shadow: 0 1px 1px rgba(17, 24, 39, 0.10) !important;
+  font-size: 0.9rem !important;
+}
+
+.chat-scroll [style*="max-width: 70%"][style*="background: var(--brand-primary)"] {
+  background: var(--wa-outgoing-bg) !important;
+  color: var(--wa-outgoing-text) !important;
+  border-color: transparent !important;
+}
+
+.chat-scroll [style*="max-width: 70%"][style*="background: var(--brand-primary)"] span,
+.chat-scroll [style*="max-width: 70%"][style*="background: var(--brand-primary)"] bdi {
+  color: inherit;
+}
+
+.chat-scroll [style*="background: var(--brand-primary)"] svg {
+  color: color-mix(in srgb, var(--wa-outgoing-text) 72%, transparent) !important;
+  stroke: color-mix(in srgb, var(--wa-outgoing-text) 72%, transparent) !important;
+}
+
+.chat-scroll [style*="background: var(--brand-primary)"] [style*="rgba(255,255,255"] {
+  color: color-mix(in srgb, var(--wa-outgoing-text) 72%, transparent) !important;
+}
+
+/* Internal notes are intentionally amber, but use a dark amber surface in dark mode. */
+.chat-scroll [style*="max-width: 75%"] {
+  background: var(--wa-note-bg) !important;
+  border-color: var(--wa-note-border) !important;
+  color: var(--wa-note-text) !important;
+}
+
+[data-theme='dark'] .chat-scroll [style*="max-width: 75%"] span {
+  color: var(--wa-note-text) !important;
+}
+
+[data-theme='dark'] .chat-scroll [style*="max-width: 75%"] [style*="#d97706"],
+[data-theme='dark'] .chat-scroll [style*="max-width: 75%"] [style*="#92400e"],
+[data-theme='dark'] .chat-scroll [style*="max-width: 75%"] [style*="#a16207"] {
+  color: var(--wa-note-muted) !important;
+}
+
+.day-chip {
+  background: var(--wa-chip-bg) !important;
+  border: 1px solid var(--wa-separator) !important;
+  color: var(--text-muted) !important;
+  border-radius: 999px;
+  padding: 0.28rem 0.7rem;
+  box-shadow: 0 1px 2px rgba(17,27,33,0.05);
+}
+
+/* Composer */
+.chat-composer {
+  background: var(--wa-composer-bg) !important;
+  border-top: 1px solid var(--wa-separator) !important;
+  padding: 0.55rem 0.75rem 0.65rem !important;
+  color: var(--text-main);
+}
+
+.chat-composer > div:last-child > div {
+  background: var(--wa-input-bg) !important;
+  border: 1px solid var(--wa-separator) !important;
+}
+
+.chat-composer textarea {
+  color: var(--text-main) !important;
+}
+
+.chat-composer > div:last-child > button:last-child {
+  background: #00a884 !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+}
+
+[data-theme='dark'] .chat-composer > div:last-child > button:last-child {
+  color: #06251d !important;
+}
+
+/* Note mode has its own warm treatment and must not stay pale yellow in dark mode. */
+[data-theme='dark'] .chat-composer [style*="background: rgb(255, 251, 235)"],
+[data-theme='dark'] .chat-composer [style*="background: #fffbeb"] {
+  background: var(--wa-note-bg) !important;
+  border-color: var(--wa-note-border) !important;
+}
+
+[data-theme='dark'] .chat-composer textarea[style*="#78350f"] {
+  color: var(--wa-note-text) !important;
+}
+
+/* Secondary panels / menus that sit inside the inbox. */
+[data-theme='dark'] .inbox-container [style*="background: var(--bg-card)"] {
+  background: var(--wa-list-bg) !important;
+  border-color: var(--wa-separator) !important;
+  color: var(--text-main) !important;
+}
+
+[data-theme='dark'] .inbox-container [style*="background: var(--bg-main)"] {
+  background: var(--wa-input-bg) !important;
+  color: var(--text-main) !important;
+  border-color: var(--wa-separator) !important;
+}
+
+[data-theme='dark'] .inbox-details section {
+  background: #182229 !important;
+  border-color: var(--wa-separator) !important;
+}
+
+[data-theme='dark'] .inbox-details button:not(.btn-primary) {
+  color: var(--text-main);
+}
+
+[data-theme='dark'] .inbox-details option {
+  background: #111b21;
+  color: #e9edef;
+}
+
+.scroll-bottom-fab {
+  background: var(--wa-input-bg) !important;
+  color: var(--wa-icon) !important;
+  border: 1px solid var(--wa-separator) !important;
+  box-shadow: 0 2px 8px rgba(17,27,33,.16) !important;
+}
+
+.ptr-indicator {
+  color: var(--text-muted);
+  background: var(--wa-list-bg);
+}
+
+@media (max-width: 1180px) and (min-width: 769px) {
+  .inbox-details { display: none !important; }
+  .inbox-aside { width: 340px !important; }
+}
+
+@media (max-width: 768px) {
+  /* Conversation list behaves like a native app screen. */
+  .inbox-container {
+    width: 100% !important;
+    max-width: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: var(--wa-list-bg) !important;
+    position: relative !important;
+  }
+
+  .inbox-container[data-mv="list"] {
+    height: calc(100dvh - var(--m-top) - var(--m-bottom)) !important;
+  }
+
+  .inbox-aside,
+  .inbox-main {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  /* These !important declarations are required because both panes have inline display:flex. */
+  .inbox-container[data-mv="list"] .inbox-aside {
+    display: flex !important;
+    z-index: 3 !important;
+  }
+
+  .inbox-container[data-mv="list"] .inbox-main {
+    display: none !important;
+  }
+
+  .inbox-container[data-mv="thread"] .inbox-aside {
+    display: none !important;
+  }
+
+  .inbox-container[data-mv="thread"] .inbox-main {
+    display: flex !important;
+    z-index: 4 !important;
+  }
+
+  .inbox-aside {
+    background: var(--wa-list-bg) !important;
+    min-width: 0 !important;
+  }
+
+  .inbox-aside > div:first-child {
+    padding: 0.75rem 0.8rem 0 !important;
+    background: var(--wa-list-bg) !important;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+
+  .inbox-aside > div:last-child {
+    min-height: 0;
+    background: var(--wa-list-bg) !important;
+  }
+
+  .conv-item {
+    min-height: 76px;
+    padding: 0.8rem 0.9rem !important;
+  }
+
+  /* Once a thread is open, it owns the viewport just like WhatsApp mobile. */
+  body.chat-open {
+    overflow: hidden !important;
+    background: var(--wa-chat-bg, #0b141a) !important;
+  }
+
+  body.chat-open .content-area {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 800 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: var(--wa-chat-bg, #efeae2) !important;
+  }
+
+  body.chat-open .inbox-container {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    min-height: 100dvh !important;
+    z-index: 801 !important;
+    overflow: hidden !important;
+    background: var(--wa-chat-bg) !important;
+  }
+
+  body.chat-open .inbox-main {
+    display: flex !important;
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    background: var(--wa-chat-bg) !important;
+  }
+
+  body.chat-open .inbox-main > header {
+    min-height: calc(62px + env(safe-area-inset-top));
+    padding: calc(7px + env(safe-area-inset-top)) 8px 7px !important;
+    background: var(--wa-header-bg) !important;
+    box-shadow: 0 1px 3px rgba(17,27,33,.08);
+    gap: 0.35rem;
+  }
+
+  body.chat-open .inbox-main > header > div:first-child {
+    min-width: 0;
+    flex: 1;
+    gap: 0.55rem !important;
+  }
+
+  body.chat-open .inbox-main > header > div:first-child > div:last-child {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  body.chat-open .inbox-main > header h3 {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 62vw;
+  }
+
+  /* Keep mobile chat header clean: secondary actions remain available on desktop. */
+  body.chat-open .inbox-main > header > div:last-child > button {
+    display: none !important;
+  }
+
+  body.chat-open .inbox-main > header > div:last-child > span {
+    display: none !important;
+  }
+
+  .inbox-back-btn {
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 50% !important;
+  }
+
+  [data-theme='dark'] body.chat-open .inbox-back-btn,
+  [data-theme='dark'] .inbox-back-btn {
+    background: #2a3942 !important;
+    color: #e9edef !important;
+    border-color: #3b4a54 !important;
+  }
+
+  .chat-scroll {
+    padding: 0.7rem 0.55rem 0.9rem !important;
+    background: var(--wa-chat-bg) !important;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .chat-scroll [style*="max-width: 70%"] {
+    max-width: 84% !important;
+    padding: 0.5rem 0.7rem 0.38rem !important;
+    border-radius: 11px !important;
+    font-size: 0.88rem !important;
+    line-height: 1.52 !important;
+  }
+
+  .day-chip {
+    position: sticky;
+    top: 6px;
+    z-index: 4;
+    font-size: 0.67rem !important;
+  }
+
+  .chat-composer {
+    padding: 0.4rem 0.45rem calc(0.42rem + env(safe-area-inset-bottom)) !important;
+    background: var(--wa-composer-bg) !important;
+  }
+
+  .chat-composer > input[type="file"] + div {
+    margin-bottom: 0.32rem !important;
+    gap: 0.25rem !important;
+  }
+
+  .chat-composer > input[type="file"] + div button {
+    padding: 0.18rem 0.58rem !important;
+    font-size: 0.66rem !important;
+  }
+
+  .chat-composer > div:last-child {
+    gap: 0.36rem !important;
+    align-items: flex-end !important;
+  }
+
+  .chat-composer > div:last-child > div {
+    min-height: 42px !important;
+    border-radius: 21px !important;
+    padding: 0.55rem 0.85rem !important;
+    background: var(--wa-input-bg) !important;
+  }
+
+  .chat-composer > div:last-child > button {
+    width: 42px !important;
+    height: 42px !important;
+  }
+
+  .chat-composer textarea {
+    font-size: 16px !important; /* Prevents iOS input zoom. */
+    max-height: 96px !important;
+  }
+
+  .inbox-details { display: none !important; }
+}
+
+/* Keep the surrounding mobile chrome coherent when dark mode is active. */
+@media (max-width: 768px) {
+  [data-theme='dark'] .mobile-topbar,
+  [data-theme='dark'] .mobile-tabbar {
+    background: #0f2e27 !important;
+    border-color: rgba(255,255,255,.08) !important;
+  }
+
+  [data-theme='dark'] .mobile-topbar .mobile-icon-btn,
+  [data-theme='dark'] .mobile-notification-btn {
+    background: #183d34 !important;
+    border-color: rgba(255,255,255,.10) !important;
+    color: #e9edef !important;
+  }
+
+  [data-theme='dark'] .mobile-tabbar .tab-item {
+    color: #93a29c;
+  }
+
+  [data-theme='dark'] .mobile-tabbar .tab-item.active {
+    color: #34d399;
+  }
+}
