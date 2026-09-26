@@ -1,0 +1,280 @@
+/* VAYRO Live Experience — refinement pass
+   Keeps the interactive demo, but tightens hierarchy so the product itself is visible
+   in the first viewport and the hero does not compete with the experience. */
+
+@media (min-width: 1050px) {
+  .demo-main {
+    padding-top: 48px;
+  }
+
+  .demo-intro {
+    max-width: 1140px;
+    margin-bottom: 28px;
+  }
+
+  .demo-intro h1 {
+    max-width: none;
+    white-space: nowrap;
+    font-size: clamp(2.85rem, 4.05vw, 4.15rem);
+    line-height: 1.02;
+  }
+
+  .demo-page[dir='rtl'] .demo-intro h1 {
+    line-height: 1.12;
+  }
+}
+
+.demo-nav {
+  min-height: 58px;
+  margin-top: 14px;
+  border-radius: 17px;
+  padding-block: 7px;
+}
+
+.demo-brand img {
+  height: 26px;
+}
+
+.demo-nav-link,
+.demo-share {
+  min-height: 40px;
+  border-radius: 11px;
+  font-size: .78rem;
+}
+
+.demo-main {
+  padding-bottom: 56px;
+}
+
+.demo-intro {
+  margin-bottom: 30px;
+}
+
+.demo-eyebrow {
+  min-height: 31px;
+  margin-bottom: 12px;
+  padding-inline: 11px;
+  font-size: .66rem;
+  letter-spacing: .075em;
+}
+
+.demo-eyebrow > span {
+  padding: 3px 7px;
+  font-size: .55rem;
+}
+
+.demo-intro > p {
+  max-width: 700px;
+  margin-top: 12px;
+  font-size: .93rem;
+  line-height: 1.72;
+}
+
+.demo-trust-row {
+  margin-top: 15px;
+}
+
+.demo-trust-row span {
+  min-height: 31px;
+  padding-inline: 10px;
+  font-size: .68rem;
+}
+
+.demo-workspace {
+  border-radius: 25px;
+  box-shadow: 0 34px 100px rgba(0,0,0,.31), inset 0 1px 0 rgba(255,255,255,.05);
+}
+
+.demo-product-tabs button {
+  min-height: 68px;
+  gap: 9px;
+  padding: 10px 14px;
+}
+
+.demo-tab-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+.demo-product-tabs strong {
+  font-size: .8rem;
+}
+
+.demo-product-tabs small {
+  font-size: .62rem;
+}
+
+.demo-tab-live {
+  top: 7px;
+  inset-inline-end: 7px;
+}
+
+.demo-stage,
+.demo-scene {
+  min-height: 510px;
+}
+
+.demo-scene-copy h2,
+.demo-relay-copy h2,
+.demo-hr-copy h2 {
+  margin-top: 10px;
+  margin-bottom: 8px;
+  font-size: clamp(1.8rem, 3.25vw, 2.8rem);
+}
+
+.demo-scene-copy > p,
+.demo-relay-copy > p,
+.demo-hr-copy > p {
+  font-size: .88rem;
+  line-height: 1.75;
+}
+
+.demo-primary-action {
+  min-height: 46px;
+  margin-top: 19px;
+  border-radius: 13px;
+}
+
+.demo-scene-otp {
+  gap: 42px;
+  padding: 38px 52px;
+}
+
+.demo-phone-wrap {
+  min-height: 420px;
+}
+
+.demo-phone {
+  width: 244px;
+  min-height: 442px;
+  border-radius: 35px;
+}
+
+.demo-wa-chat {
+  min-height: 342px;
+}
+
+.demo-hr-scene {
+  gap: 38px;
+  padding: 38px 50px;
+}
+
+.demo-pipeline-board {
+  min-height: 340px;
+  padding: 18px;
+}
+
+.demo-pipeline-track {
+  margin-top: 26px;
+}
+
+.demo-activity-card {
+  margin-top: 28px;
+}
+
+.demo-final-cta {
+  min-height: 184px;
+  margin-top: 26px;
+  border-radius: 24px;
+  padding: 30px 36px;
+}
+
+.demo-final-cta h2 {
+  font-size: clamp(1.6rem, 2.8vw, 2.45rem);
+}
+
+/* Make the active module read like a selected product, not a giant tab. */
+.demo-product-tabs button.active {
+  background: linear-gradient(180deg, rgba(49,211,153,.095), rgba(49,211,153,.025));
+}
+
+.demo-product-tabs button::after {
+  content: '';
+  position: absolute;
+  inset-inline: 18px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: transparent;
+  transition: background .2s ease, inset .2s ease;
+}
+
+.demo-product-tabs button.active::after {
+  inset-inline: 8px;
+  background: var(--demo-green);
+}
+
+/* The original active state already had an inset bottom line; remove the duplicate. */
+.demo-product-tabs button.active {
+  box-shadow: none;
+}
+
+@media (max-width: 1049px) and (min-width: 721px) {
+  .demo-main {
+    padding-top: 50px;
+  }
+
+  .demo-intro {
+    max-width: 900px;
+    margin-bottom: 28px;
+  }
+
+  .demo-intro h1 {
+    font-size: clamp(2.5rem, 6vw, 3.7rem);
+  }
+}
+
+@media (max-width: 720px) {
+  .demo-main {
+    padding-top: 34px;
+  }
+
+  .demo-intro {
+    margin-bottom: 22px;
+  }
+
+  .demo-eyebrow {
+    margin-bottom: 10px;
+  }
+
+  .demo-intro h1 {
+    white-space: normal;
+    font-size: clamp(2rem, 9.8vw, 2.9rem);
+    line-height: 1.08;
+  }
+
+  .demo-page[dir='rtl'] .demo-intro h1 {
+    line-height: 1.2;
+  }
+
+  .demo-intro > p {
+    margin-top: 10px;
+    font-size: .82rem;
+    line-height: 1.7;
+  }
+
+  .demo-trust-row {
+    margin-top: 12px;
+  }
+
+  .demo-product-tabs button {
+    min-height: 64px;
+  }
+
+  .demo-stage,
+  .demo-scene {
+    min-height: 510px;
+  }
+
+  .demo-scene-otp,
+  .demo-relay-scene,
+  .demo-hr-scene {
+    padding-top: 22px;
+    padding-bottom: 22px;
+  }
+
+  .demo-final-cta {
+    margin-top: 20px;
+  }
+}
