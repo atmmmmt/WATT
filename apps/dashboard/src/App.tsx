@@ -7,6 +7,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { SidebarLayout } from './components/SidebarLayout';
 import { MobileExperience } from './components/MobileExperience';
 import { ResponsiveRouteBridge } from './components/ResponsiveRouteBridge';
+import { CommandCenter } from './components/CommandCenter';
 import { useAuth } from './context/AuthContext';
 import { LoginPage } from './pages/LoginPage';
 
@@ -186,6 +187,7 @@ function AppShell() {
       <MobileExperience />
       <ResponsiveRouteBridge />
       <ServerStatusSidebarLink />
+      <CommandCenter />
       <Suspense fallback={<PageLoader />}>
         <RouteTransition>
           <Routes>
