@@ -1,4 +1,5 @@
 import { Play, Sparkles } from 'lucide-react';
+import './live-demo-launcher.css';
 
 const labels: Record<string, string> = {
   ar: 'جرّب VAYRO مباشرة',
