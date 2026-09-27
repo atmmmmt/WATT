@@ -10,6 +10,7 @@ import './mobile-route-fixes.css';
 import './motion-system.css';
 import './command-center.css';
 import './product-polish-v5.css';
+import './mobile-app-v2.css';
 
 registerPwa();
 
