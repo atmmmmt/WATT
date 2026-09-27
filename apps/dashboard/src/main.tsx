@@ -9,6 +9,7 @@ import './mobile-premium.css';
 import './mobile-route-fixes.css';
 import './motion-system.css';
 import './command-center.css';
+import './product-polish-v5.css';
 
 registerPwa();
 
