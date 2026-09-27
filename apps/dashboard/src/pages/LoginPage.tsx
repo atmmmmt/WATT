@@ -85,7 +85,7 @@ export function LoginPage() {
             <strong>VAYRO</strong>
           </div>
 
-          <div className="vayro-login-mobile-mascot" aria-hidden="true">
+          <div className="vayro-login-mobile-mascot" style={{ display: 'none' }} aria-hidden="true">
             <Mascot pose="wave" size={112} />
           </div>
 
