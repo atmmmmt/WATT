@@ -85,13 +85,17 @@ export function LoginPage() {
             <strong>VAYRO</strong>
           </div>
 
+          <div className="vayro-login-mobile-mascot" aria-hidden="true">
+            <Mascot pose="wave" size={112} />
+          </div>
+
           <div className="vayro-login-heading">
             <div className="vayro-login-security-icon">
               <ShieldCheck size={22} aria-hidden="true" />
             </div>
             <div>
-              <h2>تسجيل الدخول</h2>
-              <p>استخدم بيانات حسابك للوصول إلى مساحة عملك.</p>
+              <h2>أهلاً بعودتك</h2>
+              <p>سجّل دخولك وكمل شغلك من VAYRO بسرعة.</p>
             </div>
           </div>
 
