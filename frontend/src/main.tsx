@@ -35,6 +35,7 @@ async function bootstrap() {
     import('./landing-typography-v4.css'),
     import('./premium-landing-v5.css'),
     import('./landing-mobile-v6.css'),
+    import('./landing-mobile-v7.css'),
   ]);
 
   const [{ App }, { LiveDemoLauncher }] = await Promise.all([
