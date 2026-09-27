@@ -1,0 +1,141 @@
+/* VAYRO Product Polish v5 — typography, theming, mobile comfort, assistant */
+
+:root {
+  --font-arabic: 'Cairo', system-ui, sans-serif;
+  --v-space-1: 4px;
+  --v-space-2: 8px;
+  --v-space-3: 12px;
+  --v-space-4: 16px;
+  --v-space-5: 20px;
+  --v-space-6: 24px;
+  --v-space-8: 32px;
+  --v-space-10: 40px;
+  --v-space-12: 48px;
+  --v-content: 1280px;
+  --v-title-xl: clamp(1.85rem, 2.8vw, 2.65rem);
+  --v-title-lg: clamp(1.5rem, 2.1vw, 2rem);
+  --v-title-md: clamp(1.14rem, 1.5vw, 1.4rem);
+  --v-body: 0.95rem;
+}
+
+html, body, button, input, textarea, select { font-family: var(--font-arabic) !important; }
+body { font-size: var(--v-body); line-height: 1.68; text-rendering: optimizeLegibility; }
+
+.page-stack { max-width: var(--v-content); padding: 32px clamp(20px, 3vw, 40px); gap: 24px; }
+.page-stack h1 { font-size: var(--v-title-xl); line-height: 1.22; font-weight: 800; letter-spacing: -.025em; text-wrap: balance; }
+.page-stack h2 { font-size: var(--v-title-lg); line-height: 1.28; font-weight: 800; text-wrap: balance; }
+.page-stack h3 { font-size: var(--v-title-md); line-height: 1.35; font-weight: 700; }
+.page-stack p { max-width: 72ch; line-height: 1.75; }
+
+.card { border-radius: 18px; padding: 22px; box-shadow: var(--shadow-sm); }
+button, .button, input, select { min-height: 44px; }
+input, textarea, select { font-size: 16px; border-radius: 12px; }
+.button { border-radius: 12px; font-weight: 700; }
+
+/* Deterministic light theme — no dark hard-coded surfaces leaking through. */
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg-base: #F6F8F7;
+  --bg-main: #F6F8F7;
+  --bg-card: #FFFFFF;
+  --bg-sidebar: #FFFFFF;
+  --bg-elevated: #FFFFFF;
+  --text-main: #10211B;
+  --text-secondary: #33443E;
+  --text-muted: #6E7D78;
+  --border-soft: #E4EAE7;
+  --border-medium: #D3DDD8;
+}
+:root[data-theme='light'] .app-shell,
+:root[data-theme='light'] .content-area,
+:root[data-theme='light'] .page-stack,
+:root[data-theme='light'] .mobile-topbar,
+:root[data-theme='light'] .mobile-tabbar,
+:root[data-theme='light'] .sidebar { background: var(--bg-main); color: var(--text-main); }
+:root[data-theme='light'] .sidebar,
+:root[data-theme='light'] .mobile-topbar,
+:root[data-theme='light'] .mobile-tabbar { background: #fff; }
+:root[data-theme='light'] .card,
+:root[data-theme='light'] [class*='panel'],
+:root[data-theme='light'] [class*='modal'] { color: var(--text-main); }
+
+:root[data-theme='dark'] { color-scheme: dark; }
+
+/* Mobile: one calm column, large tap targets, native-app spacing. */
+@media (max-width: 768px) {
+  :root { --v-title-xl: 1.72rem; --v-title-lg: 1.34rem; --v-title-md: 1.08rem; --v-body: .91rem; }
+  .page-stack { padding: 16px 14px calc(94px + env(safe-area-inset-bottom)); gap: 16px; }
+  .page-stack > * { min-width: 0; }
+  .card { padding: 16px; border-radius: 16px; }
+  .mobile-topbar { min-height: 58px; padding-inline: 12px; }
+  .mobile-topbar-title { font-size: .98rem; font-weight: 800; }
+  .mobile-tabbar { min-height: 68px; padding-bottom: max(6px, env(safe-area-inset-bottom)); }
+  .tab-item { min-width: 0; min-height: 54px; }
+  .tab-item span:last-child { font-size: .67rem; }
+  input, textarea, select, button { font-size: 16px; }
+}
+
+/* Global assistant */
+.vayro-assistant-fab {
+  position: fixed; z-index: 210; inset-inline-start: 20px; bottom: 20px;
+  min-height: 66px; display: flex; align-items: center; gap: 10px;
+  border: 1px solid var(--border-brand); border-radius: 20px;
+  background: var(--bg-card); color: var(--text-main); padding: 8px 12px 8px 8px;
+  box-shadow: var(--shadow-xl); cursor: pointer; overflow: visible;
+}
+.vayro-assistant-fab-character { width: 54px; height: 54px; display: grid; place-items: end center; overflow: visible; }
+.vayro-assistant-fab-copy { display: grid; gap: 1px; text-align: start; }
+.vayro-assistant-fab-copy small { display: flex; align-items: center; gap: 5px; color: var(--brand-secondary); font-size: .67rem; font-weight: 800; }
+.vayro-assistant-fab-copy strong { font-size: .84rem; }
+.vayro-assistant-backdrop { position: fixed; inset: 0; z-index: 500; display: flex; align-items: flex-end; justify-content: flex-start; padding: 20px; background: rgba(3,18,14,.28); backdrop-filter: blur(4px); }
+.vayro-assistant-panel { width: min(420px, calc(100vw - 24px)); max-height: min(720px, calc(100dvh - 40px)); display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--border-soft); border-radius: 24px; background: var(--bg-card); box-shadow: var(--shadow-xl); }
+.vayro-assistant-head { position: relative; min-height: 160px; display: grid; grid-template-columns: 98px 1fr; gap: 12px; align-items: center; padding: 20px; overflow: hidden; background: var(--brand-primary-deep); color: #fff; }
+.vayro-assistant-head-character { align-self: end; }
+.vayro-assistant-head span { color: #8ff0c6; font-size: .66rem; font-weight: 900; letter-spacing: .08em; }
+.vayro-assistant-head h2 { margin: 4px 0; font-size: 1.12rem; line-height: 1.35; }
+.vayro-assistant-head p { color: rgba(255,255,255,.72); font-size: .78rem; line-height: 1.65; }
+.vayro-assistant-head > button { position: absolute; top: 10px; inset-inline-start: 10px; width: 38px; min-height: 38px; border: 0; border-radius: 11px; background: rgba(255,255,255,.08); color: #fff; }
+.vayro-assistant-actions { display: flex; gap: 8px; padding: 12px 14px 0; overflow-x: auto; }
+.vayro-assistant-actions button { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border-soft); border-radius: 999px; background: var(--bg-main); color: var(--text-main); padding: 0 12px; font-weight: 700; }
+.vayro-assistant-chat { min-height: 170px; max-height: 310px; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 8px; }
+.vayro-assistant-empty { margin: auto; display: grid; justify-items: center; gap: 8px; color: var(--text-muted); font-size: .8rem; }
+.vayro-assistant-message { max-width: 86%; border-radius: 15px; padding: 9px 11px; font-size: .8rem; line-height: 1.65; }
+.vayro-assistant-message.user { align-self: flex-start; background: var(--brand-primary); color: var(--on-brand); }
+.vayro-assistant-message.assistant { align-self: flex-end; background: var(--bg-main); border: 1px solid var(--border-soft); }
+.vayro-assistant-composer { display: grid; grid-template-columns: 1fr 44px; gap: 8px; padding: 12px; border-top: 1px solid var(--border-soft); }
+.vayro-assistant-composer input { width: 100%; border: 1px solid var(--border-soft); background: var(--bg-main); color: var(--text-main); padding-inline: 12px; }
+.vayro-assistant-composer button { border: 0; border-radius: 12px; background: var(--brand-primary); color: var(--on-brand); display: grid; place-items: center; }
+
+/* AI chatbot workspace */
+.vayro-ai-page { gap: 18px; }
+.vayro-ai-hero { min-height: 250px; display: grid; grid-template-columns: 1.2fr .8fr; gap: 24px; align-items: center; overflow: hidden; border-radius: 24px; padding: 28px 32px; background: var(--brand-primary-deep); color: white; }
+.vayro-ai-kicker { display: inline-flex; align-items: center; gap: 7px; color: #8ff0c6; font-size: .72rem; font-weight: 900; letter-spacing: .08em; }
+.vayro-ai-hero h1 { max-width: 14ch; margin: 8px 0; color: white; font-size: clamp(2rem, 3.4vw, 3.25rem); line-height: 1.18; }
+.vayro-ai-hero p { max-width: 55ch; color: rgba(255,255,255,.72); }
+.vayro-ai-status { margin-top: 16px; display: inline-flex; align-items: center; gap: 7px; border: 1px solid rgba(255,255,255,.12); border-radius: 999px; padding: 7px 10px; font-size: .74rem; color: rgba(255,255,255,.82); }
+.vayro-ai-status > span { width: 8px; height: 8px; border-radius: 50%; background: #8a9b95; }.vayro-ai-status > span.on { background: #34d399; box-shadow: 0 0 0 5px rgba(52,211,153,.12); }
+.vayro-ai-hero-character { justify-self: center; display: grid; justify-items: center; gap: 5px; }
+.vayro-ai-hero-character > div { display: grid; justify-items: center; border: 1px solid rgba(255,255,255,.12); border-radius: 14px; background: rgba(255,255,255,.06); padding: 8px 14px; }.vayro-ai-hero-character small { color: rgba(255,255,255,.6); }
+.vayro-ai-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 18px; }
+.vayro-ai-settings > header, .vayro-ai-preview > header, .vayro-ai-knowledge > header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 18px; }
+.vayro-ai-settings header span, .vayro-ai-preview header span, .vayro-ai-knowledge header span { color: var(--brand-secondary); font-size: .68rem; font-weight: 900; letter-spacing: .08em; }
+.vayro-ai-settings header h2, .vayro-ai-preview header h2, .vayro-ai-knowledge header h2 { margin-top: 2px; font-size: 1.18rem; }
+.vayro-ai-toggle-row { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 18px; border-radius: 14px; background: var(--bg-main); padding: 12px 14px; }.vayro-ai-toggle-row > div { display: grid; }.vayro-ai-toggle-row small { color: var(--text-muted); }
+.vayro-ai-switch { width: 48px; min-height: 28px; height: 28px; border: 0; border-radius: 999px; background: var(--border-medium); padding: 3px; }.vayro-ai-switch span { display: block; width: 22px; height: 22px; border-radius: 50%; background: white; transition: transform .2s ease; }.vayro-ai-switch.active { background: var(--brand-secondary); }.vayro-ai-switch.active span { transform: translateX(-20px); }
+.vayro-ai-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }.vayro-ai-form-grid label { display: grid; gap: 6px; }.vayro-ai-form-grid label > span { font-size: .76rem; font-weight: 700; color: var(--text-secondary); }.vayro-ai-form-grid .wide { grid-column: 1 / -1; }.vayro-ai-form-grid input, .vayro-ai-form-grid textarea, .vayro-ai-form-grid select, .vayro-ai-knowledge textarea { width: 100%; border: 1px solid var(--border-soft); background: var(--bg-main); color: var(--text-main); padding: 10px 12px; resize: vertical; }
+.vayro-ai-chat-preview { overflow: hidden; border: 1px solid var(--border-soft); border-radius: 18px; background: var(--bg-main); }.vayro-ai-chat-head { min-height: 58px; display: flex; align-items: center; gap: 9px; padding: 10px 12px; background: var(--brand-primary-deep); color: white; }.vayro-ai-chat-head > span { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 11px; background: rgba(255,255,255,.08); }.vayro-ai-chat-head > div { display: grid; }.vayro-ai-chat-head small { color: rgba(255,255,255,.62); }
+.vayro-ai-messages { min-height: 320px; max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 14px; }.vayro-ai-message { max-width: 84%; border-radius: 14px; padding: 9px 11px; font-size: .8rem; line-height: 1.65; }.vayro-ai-message.assistant { align-self: flex-start; background: var(--bg-card); border: 1px solid var(--border-soft); }.vayro-ai-message.user { align-self: flex-end; background: var(--brand-primary); color: var(--on-brand); }
+.vayro-ai-chat-preview form { display: grid; grid-template-columns: 1fr 42px; gap: 8px; padding: 10px; border-top: 1px solid var(--border-soft); background: var(--bg-card); }.vayro-ai-chat-preview form input { width: 100%; border: 1px solid var(--border-soft); background: var(--bg-main); color: var(--text-main); padding-inline: 11px; }.vayro-ai-chat-preview form button { border: 0; border-radius: 11px; background: var(--brand-primary); color: var(--on-brand); display: grid; place-items: center; }
+.vayro-ai-knowledge header p { margin-top: 4px; color: var(--text-muted); font-size: .78rem; }.vayro-ai-knowledge code { direction: ltr; unicode-bidi: isolate; }
+
+@media (max-width: 900px) { .vayro-ai-hero, .vayro-ai-grid { grid-template-columns: 1fr; }.vayro-ai-hero-character { order: -1; }.vayro-ai-hero { text-align: center; padding: 24px 20px; }.vayro-ai-hero h1, .vayro-ai-hero p { margin-inline: auto; } }
+@media (max-width: 768px) {
+  .vayro-assistant-fab { inset-inline-start: 12px; bottom: calc(78px + env(safe-area-inset-bottom)); min-height: 54px; border-radius: 17px; padding: 6px 9px 6px 6px; }
+  .vayro-assistant-fab-character { width: 44px; height: 44px; }.vayro-assistant-fab-copy strong { font-size: .76rem; }.vayro-assistant-fab-copy small { font-size: .6rem; }
+  .vayro-assistant-backdrop { padding: 0; align-items: flex-end; background: rgba(3,18,14,.38); }
+  .vayro-assistant-panel { width: 100%; max-height: 88dvh; border-radius: 24px 24px 0 0; border-bottom: 0; }
+  .vayro-assistant-head { min-height: 145px; grid-template-columns: 88px 1fr; padding: 16px; }
+  .vayro-ai-page { padding-top: 12px; }.vayro-ai-hero { min-height: auto; border-radius: 20px; }.vayro-ai-hero-character { transform: scale(.92); margin-bottom: -10px; }.vayro-ai-form-grid { grid-template-columns: 1fr; }.vayro-ai-form-grid .wide { grid-column: auto; }.vayro-ai-messages { min-height: 280px; }.vayro-ai-settings > header { align-items: flex-start; }
+}
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; } }
