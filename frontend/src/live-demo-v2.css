@@ -2,20 +2,47 @@
    Keeps the interactive demo, but tightens hierarchy so the product itself is visible
    in the first viewport and the hero does not compete with the experience. */
 
+/* Dedicated demo document reset. The demo is now code-split from the marketing site,
+   so own the root canvas explicitly and never let the browser's default white canvas
+   peek through before/around the app. */
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  min-width: 320px;
+  min-height: 100%;
+  background: #04130f !important;
+  overscroll-behavior-y: none;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  min-height: 100dvh;
+}
+
+.demo-page {
+  min-height: 100dvh;
+  background: #04130f;
+}
+
 @media (min-width: 1050px) {
   .demo-main {
-    padding-top: 48px;
+    padding-top: 38px;
   }
 
   .demo-intro {
     max-width: 1140px;
-    margin-bottom: 28px;
+    margin-bottom: 24px;
   }
 
   .demo-intro h1 {
     max-width: none;
     white-space: nowrap;
-    font-size: clamp(2.85rem, 4.05vw, 4.15rem);
+    font-size: clamp(2.75rem, 3.75vw, 3.9rem);
     line-height: 1.02;
   }
 
@@ -26,7 +53,7 @@
 
 .demo-nav {
   min-height: 58px;
-  margin-top: 14px;
+  margin-top: 10px;
   border-radius: 17px;
   padding-block: 7px;
 }
@@ -212,26 +239,30 @@
 
 @media (max-width: 1049px) and (min-width: 721px) {
   .demo-main {
-    padding-top: 50px;
+    padding-top: 46px;
   }
 
   .demo-intro {
     max-width: 900px;
-    margin-bottom: 28px;
+    margin-bottom: 26px;
   }
 
   .demo-intro h1 {
-    font-size: clamp(2.5rem, 6vw, 3.7rem);
+    font-size: clamp(2.4rem, 5.6vw, 3.5rem);
   }
 }
 
 @media (max-width: 720px) {
+  .demo-nav {
+    margin-top: 6px;
+  }
+
   .demo-main {
-    padding-top: 34px;
+    padding-top: 28px;
   }
 
   .demo-intro {
-    margin-bottom: 22px;
+    margin-bottom: 20px;
   }
 
   .demo-eyebrow {
@@ -240,7 +271,7 @@
 
   .demo-intro h1 {
     white-space: normal;
-    font-size: clamp(2rem, 9.8vw, 2.9rem);
+    font-size: clamp(2rem, 9.4vw, 2.75rem);
     line-height: 1.08;
   }
 
