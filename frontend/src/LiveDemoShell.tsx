@@ -1,17 +1,27 @@
-import { MouseEvent } from 'react';
+import { MouseEvent, useEffect, useState } from 'react';
 import { LiveDemo } from './LiveDemo';
+import { MobileLiveDemo } from './MobileLiveDemo';
 
 /**
- * The public demo is mounted as a dedicated experience. React Router links inside the
- * demo update the URL, but the outer entrypoint is intentionally selected only once at
- * boot time. Force full-document navigation for links that leave the demo so "Back to
- * site" and the final CTA always land on the real landing page.
+ * The public demo has a dedicated phone-first experience. Desktop keeps the rich
+ * showcase while phones get a guided, touch-first flow that explains what to do.
+ * Links leaving the demo use full-document navigation because the entrypoint is
+ * selected once at boot time.
  */
 export function LiveDemoShell() {
+  const [mobile, setMobile] = useState(() => window.matchMedia('(max-width: 760px)').matches);
+
+  useEffect(() => {
+    const media = window.matchMedia('(max-width: 760px)');
+    const sync = () => setMobile(media.matches);
+    media.addEventListener('change', sync);
+    return () => media.removeEventListener('change', sync);
+  }, []);
+
   function handleNavigationCapture(event: MouseEvent<HTMLDivElement>) {
     const target = event.target as HTMLElement | null;
     const anchor = target?.closest<HTMLAnchorElement>(
-      'a.demo-brand, a.demo-nav-link, a.demo-final-button',
+      'a.demo-brand, a.demo-nav-link, a.demo-final-button, a.mlive-back, a.mlive-cta a',
     );
 
     if (!anchor) return;
@@ -25,7 +35,7 @@ export function LiveDemoShell() {
 
   return (
     <div onClickCapture={handleNavigationCapture}>
-      <LiveDemo />
+      {mobile ? <MobileLiveDemo /> : <LiveDemo />}
     </div>
   );
 }
