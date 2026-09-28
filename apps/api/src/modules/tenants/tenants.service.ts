@@ -217,6 +217,39 @@ export class TenantsService {
     return tenant;
   }
 
+  async sendPasswordReset(tenantId: string) {
+    const tenant = await this.findById(tenantId);
+    const users = await this.usersService.listAllForTenant(tenantId);
+    const tenantAdmin = users.find((user) => user.role === UserRole.TENANT_ADMIN);
+
+    if (!tenantAdmin) {
+      throw new NotFoundException('لا يوجد حساب مدير مرتبط بهذا العميل');
+    }
+
+    const reset = await this.usersService.generateResetToken(tenantAdmin.email);
+    if (!reset) {
+      throw new NotFoundException('تعذر العثور على حساب مدير العميل');
+    }
+
+    const dashboardOrigin =
+      this.configService.get<string>('dashboardOrigin') || 'https://app.vayro-wa.com';
+    const resetUrl = `${dashboardOrigin}/reset-password?token=${reset.resetToken}`;
+    const sent = await this.mailerService.sendPasswordReset({
+      to: reset.user.email,
+      name: reset.user.name || tenant.name,
+      resetUrl,
+    });
+
+    if (!sent) {
+      throw new BadRequestException('تعذر إرسال رسالة إعادة تعيين كلمة المرور');
+    }
+
+    return {
+      success: true,
+      email: reset.user.email,
+    };
+  }
+
   async deleteTenant(tenantId: string) {
     const tenant = await this.tenantModel.findById(tenantId).lean();
 

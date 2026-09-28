@@ -1,18 +1,16 @@
 /*
- * Wathqly service worker — app-shell + static asset caching.
- * Bump CACHE_VERSION to force clients onto a fresh cache after a deploy.
+ * VAYRO service worker — fast app-shell/static caching without stale business data.
  *
  * Rules:
- *  - Navigations: network-first, fall back to cached shell when offline.
- *  - Same-origin static assets (/assets, /icons, fonts): stale-while-revalidate
- *    (instant load from cache, refreshed in the background).
- *  - API / cross-origin / non-GET: never touched — always straight to the network,
- *    so live data is never served stale.
+ *  - Navigations: network-first, cached shell only as an offline fallback.
+ *  - Same-origin immutable/static assets: stale-while-revalidate.
+ *  - API requests / cross-origin application data / non-GET: never cached here.
+ *  - Notification clicks focus an existing VAYRO window or open the relevant route.
  */
-const CACHE_VERSION = 'wathqly-v2';
+const CACHE_VERSION = 'vayro-v4';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const ASSET_CACHE = `${CACHE_VERSION}-assets`;
-const FONT_CACHE = 'wathqly-fonts';
+const FONT_CACHE = `${CACHE_VERSION}-fonts`;
 const FONT_ORIGINS = ['https://fonts.googleapis.com', 'https://fonts.gstatic.com'];
 
 const SHELL_ASSETS = [
@@ -21,6 +19,12 @@ const SHELL_ASSETS = [
   '/manifest.webmanifest',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
+  '/icons/icon-maskable-512.png',
+  '/brand/vayro-logo.png',
+  '/brand/vayro-logo-white.png',
+  '/mascot/front.webp',
+  '/mascot/idle.webp',
+  '/mascot/phone.webp',
 ];
 
 self.addEventListener('install', (event) => {
@@ -37,7 +41,7 @@ self.addEventListener('activate', (event) => {
       .then((keys) =>
         Promise.all(
           keys
-            .filter((key) => !key.startsWith(CACHE_VERSION) && key !== FONT_CACHE)
+            .filter((key) => key !== SHELL_CACHE && key !== ASSET_CACHE && key !== FONT_CACHE)
             .map((key) => caches.delete(key)),
         ),
       )
@@ -45,7 +49,6 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Allow the page to tell a waiting SW to activate immediately.
 self.addEventListener('message', (event) => {
   if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
@@ -54,6 +57,8 @@ function isStaticAsset(url) {
   return (
     url.pathname.startsWith('/assets/') ||
     url.pathname.startsWith('/icons/') ||
+    url.pathname.startsWith('/brand/') ||
+    url.pathname.startsWith('/mascot/') ||
     /\.(?:js|css|woff2?|ttf|otf|png|jpg|jpeg|svg|webp|ico)$/.test(url.pathname)
   );
 }
@@ -64,8 +69,6 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url);
 
-  // Google Fonts never change for a given URL: cache-first, so the Arabic font
-  // renders instantly and keeps working offline.
   if (FONT_ORIGINS.includes(url.origin)) {
     event.respondWith(
       caches.open(FONT_CACHE).then(async (cache) => {
@@ -79,17 +82,17 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Only handle our own origin. API calls (different origin) and any cross-origin
-  // request go straight to the network — never cached.
+  // Cross-origin requests include the API origin. Do not cache customer/business data.
   if (url.origin !== self.location.origin) return;
 
-  // App navigations: network-first so deploys are picked up, offline falls back to shell.
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const copy = response.clone();
-          caches.open(SHELL_CACHE).then((cache) => cache.put('/index.html', copy)).catch(() => {});
+          if (response && response.ok) {
+            const copy = response.clone();
+            caches.open(SHELL_CACHE).then((cache) => cache.put('/index.html', copy)).catch(() => {});
+          }
           return response;
         })
         .catch(() => caches.match('/index.html').then((r) => r || caches.match('/'))),
@@ -97,7 +100,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets: stale-while-revalidate.
   if (isStaticAsset(url)) {
     event.respondWith(
       caches.open(ASSET_CACHE).then(async (cache) => {
@@ -112,4 +114,40 @@ self.addEventListener('fetch', (event) => {
       }),
     );
   }
+});
+
+// Ready for Web Push payloads once a subscription is attached server-side.
+// Keeping handling in the SW means notifications can deep-link to a conversation route.
+self.addEventListener('push', (event) => {
+  let payload = {};
+  try { payload = event.data ? event.data.json() : {}; } catch { payload = { body: event.data?.text?.() || '' }; }
+  const title = payload.title || 'VAYRO';
+  const options = {
+    body: payload.body || 'لديك تحديث جديد في VAYRO',
+    icon: payload.icon || '/icons/icon-192.png',
+    badge: payload.badge || '/icons/icon-192.png',
+    tag: payload.tag || 'vayro-notification',
+    renotify: Boolean(payload.renotify),
+    data: { url: payload.url || '/support/inbox', ...(payload.data || {}) },
+    dir: 'rtl',
+    lang: 'ar',
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const targetUrl = new URL(event.notification?.data?.url || '/support/inbox', self.location.origin).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (clients) => {
+      for (const client of clients) {
+        if ('focus' in client) {
+          await client.focus();
+          if ('navigate' in client) await client.navigate(targetUrl);
+          return;
+        }
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(targetUrl);
+    }),
+  );
 });

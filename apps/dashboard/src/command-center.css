@@ -1,0 +1,304 @@
+/* VAYRO global command center */
+.vayro-command-launcher {
+  position: fixed;
+  z-index: 145;
+  inset-inline-start: 18px;
+  bottom: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--bg-card) 94%, transparent);
+  color: var(--text-primary);
+  padding: 0 10px 0 12px;
+  box-shadow: 0 12px 35px rgba(7, 49, 38, .12);
+  backdrop-filter: blur(16px) saturate(135%);
+  -webkit-backdrop-filter: blur(16px) saturate(135%);
+  cursor: pointer;
+}
+
+.vayro-command-launcher span {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.vayro-command-launcher kbd,
+.vayro-command-panel kbd {
+  font: inherit;
+  border: 1px solid var(--border-soft);
+  border-bottom-color: color-mix(in srgb, var(--border-soft) 70%, var(--text-secondary));
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--bg-page) 85%, var(--bg-card));
+  color: var(--text-secondary);
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.3;
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--border-soft) 70%, transparent);
+}
+
+.vayro-command-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: start center;
+  padding: min(12vh, 110px) 18px 24px;
+  background: rgba(5, 16, 13, .38);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.vayro-command-panel {
+  width: min(720px, 100%);
+  max-height: min(720px, calc(100dvh - 130px));
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--border-soft) 82%, transparent);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--bg-card) 97%, transparent);
+  box-shadow: 0 34px 100px rgba(0, 0, 0, .28);
+  direction: rtl;
+}
+
+.vayro-command-head,
+.vayro-command-search,
+.vayro-command-footer {
+  display: flex;
+  align-items: center;
+}
+
+.vayro-command-head {
+  justify-content: space-between;
+  min-height: 52px;
+  padding: 0 14px 0 12px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.vayro-command-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--brand-primary);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+
+.vayro-command-head > button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.vayro-command-head > button:hover { background: var(--bg-page); color: var(--text-primary); }
+
+.vayro-command-search {
+  gap: 10px;
+  min-height: 70px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border-soft);
+  color: var(--text-secondary);
+}
+
+.vayro-command-search > svg { color: var(--brand-primary); flex: 0 0 auto; }
+
+.vayro-command-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0 !important;
+  outline: 0;
+  box-shadow: none !important;
+  background: transparent !important;
+  color: var(--text-primary);
+  padding: 0;
+  font: inherit;
+  font-size: 17px;
+  font-weight: 650;
+}
+
+.vayro-command-search input::placeholder { color: var(--text-muted); opacity: .82; }
+
+.vayro-command-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px;
+  scrollbar-width: thin;
+}
+
+.vayro-command-section-label {
+  padding: 10px 10px 6px;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+
+.vayro-command-item {
+  width: 100%;
+  min-height: 62px;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid transparent;
+  border-radius: 15px;
+  background: transparent;
+  color: var(--text-primary);
+  padding: 7px 9px;
+  text-align: start;
+  cursor: pointer;
+}
+
+.vayro-command-item.is-active {
+  border-color: color-mix(in srgb, var(--brand-primary) 18%, var(--border-soft));
+  background: color-mix(in srgb, var(--brand-primary) 7%, var(--bg-card));
+}
+
+.vayro-command-icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+  background: var(--bg-page);
+  color: var(--brand-primary);
+}
+
+.vayro-command-item.is-active .vayro-command-icon {
+  border-color: color-mix(in srgb, var(--brand-primary) 25%, var(--border-soft));
+  background: color-mix(in srgb, var(--brand-primary) 10%, var(--bg-card));
+}
+
+.vayro-command-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.vayro-command-copy strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.vayro-command-copy small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.vayro-command-group {
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-page) 75%, transparent);
+  color: var(--text-muted);
+  padding: 4px 8px;
+  font-size: 9px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.vayro-command-empty {
+  min-height: 250px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.vayro-command-empty svg { color: var(--brand-primary); opacity: .65; }
+.vayro-command-empty strong { color: var(--text-primary); font-size: 14px; }
+.vayro-command-empty span { max-width: 320px; font-size: 12px; }
+
+.vayro-command-footer {
+  justify-content: flex-start;
+  gap: 14px;
+  min-height: 45px;
+  padding: 0 13px;
+  border-top: 1px solid var(--border-soft);
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.vayro-command-footer > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.vayro-command-powered { margin-inline-start: auto; font-weight: 800; letter-spacing: .05em; }
+
+@media (max-width: 768px) {
+  .vayro-command-launcher {
+    inset-inline-start: 14px;
+    bottom: calc(var(--m-bottom, 68px) + 12px + env(safe-area-inset-bottom));
+    width: 46px;
+    height: 46px;
+    min-height: 46px;
+    justify-content: center;
+    border-radius: 15px;
+    padding: 0;
+  }
+
+  .vayro-command-launcher span,
+  .vayro-command-launcher kbd { display: none; }
+
+  body.chat-open .vayro-command-launcher { display: none; }
+
+  .vayro-command-backdrop {
+    place-items: end center;
+    padding: 0;
+    background: rgba(5, 16, 13, .42);
+  }
+
+  .vayro-command-panel {
+    width: 100%;
+    max-height: min(82dvh, 760px);
+    border-radius: 24px 24px 0 0;
+    border-bottom: 0;
+    box-shadow: 0 -20px 70px rgba(0, 0, 0, .24);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .vayro-command-panel::before {
+    content: '';
+    width: 38px;
+    height: 4px;
+    position: absolute;
+    top: 7px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 999px;
+    background: var(--border-soft);
+  }
+
+  .vayro-command-head { min-height: 48px; padding-top: 6px; }
+  .vayro-command-search { min-height: 64px; padding-inline: 13px; }
+  .vayro-command-search input { font-size: 16px; }
+  .vayro-command-group { display: none; }
+  .vayro-command-item { grid-template-columns: 42px minmax(0, 1fr); min-height: 60px; }
+  .vayro-command-footer { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vayro-command-launcher,
+  .vayro-command-item { transition: none !important; }
+}

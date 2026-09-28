@@ -6,13 +6,18 @@ export default () => ({
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '12h',
   dashboardOrigin: process.env.DASHBOARD_ORIGIN || 'http://localhost:5173',
   appPublicUrl: process.env.APP_PUBLIC_URL || 'http://localhost:4000',
+  resend: {
+    apiKey: process.env.RESEND_API_KEY || '',
+    from: process.env.RESEND_FROM || 'hello@vayro-wa.com',
+    fromName: process.env.RESEND_FROM_NAME || 'VAYRO',
+  },
   smtp: {
     host: process.env.SMTP_HOST || '',
     port: Number(process.env.SMTP_PORT || 587),
     secure: process.env.SMTP_SECURE === 'true',
     user: process.env.SMTP_USER || '',
     pass: process.env.SMTP_PASS || '',
-    from: process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@example.com',
-    fromName: process.env.SMTP_FROM_NAME || 'ProoTech Platform',
+    from: process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@vayro-wa.com',
+    fromName: process.env.SMTP_FROM_NAME || 'VAYRO',
   },
 });

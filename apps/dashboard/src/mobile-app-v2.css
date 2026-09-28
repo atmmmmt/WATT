@@ -1,0 +1,592 @@
+/* VAYRO Mobile App v2 — final phone-first experience layer.
+   Loaded last on purpose: it normalizes older responsive patches into one coherent app shell. */
+
+@media (max-width: 768px) {
+  :root {
+    --m2-page-x: 12px;
+    --m2-dock-h: 68px;
+    --m2-topbar-h: 62px;
+    --m2-radius-card: 18px;
+    --m2-radius-control: 14px;
+    --m2-border: color-mix(in srgb, var(--border-soft) 88%, transparent);
+  }
+
+  html, body, #root, .app-shell {
+    width: 100%;
+    min-width: 0;
+    min-height: 100%;
+    height: 100dvh;
+    overscroll-behavior: none;
+  }
+
+  body {
+    background: var(--bg-main) !important;
+    font-size: 14px;
+    line-height: 1.65;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  .app-shell {
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    background: var(--bg-main) !important;
+  }
+
+  .sidebar { display: none !important; }
+
+  /* ── Native top bar ───────────────────────────────────── */
+  .mobile-topbar {
+    flex: 0 0 auto;
+    position: relative !important;
+    inset: auto !important;
+    z-index: 220 !important;
+    min-height: calc(var(--m2-topbar-h) + env(safe-area-inset-top)) !important;
+    padding: calc(8px + env(safe-area-inset-top)) 12px 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    background: color-mix(in srgb, var(--bg-card) 94%, transparent) !important;
+    color: var(--text-main) !important;
+    border-bottom: 1px solid var(--m2-border) !important;
+    box-shadow: 0 1px 0 rgba(0,0,0,.02) !important;
+    backdrop-filter: blur(18px) saturate(1.15) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(1.15) !important;
+  }
+
+  .mobile-topbar-brand {
+    display: flex !important;
+    align-items: center !important;
+    gap: 9px !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+  }
+
+  .mobile-topbar-brand > svg,
+  .mobile-topbar-brand > div:first-child:not([style]) {
+    flex: 0 0 auto;
+  }
+
+  .mobile-topbar-kicker {
+    font-size: 9px !important;
+    line-height: 1.15 !important;
+    font-weight: 900 !important;
+    letter-spacing: .1em !important;
+    color: var(--brand-secondary) !important;
+  }
+
+  .mobile-topbar-title {
+    max-width: 42vw;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-size: 15px !important;
+    line-height: 1.35 !important;
+    font-weight: 800 !important;
+    letter-spacing: -.015em !important;
+    color: var(--text-main) !important;
+  }
+
+  .mobile-topbar-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    flex: 0 0 auto !important;
+  }
+
+  .mobile-icon-btn,
+  .mobile-notification-btn,
+  .mobile-global-back,
+  .mobile-avatar {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    border-radius: 13px !important;
+    border: 1px solid var(--m2-border) !important;
+    background: var(--bg-main) !important;
+    color: var(--text-main) !important;
+    box-shadow: none !important;
+    display: inline-grid !important;
+    place-items: center !important;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-avatar {
+    border-radius: 50% !important;
+    color: #fff !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+  }
+
+  .mobile-global-back:active,
+  .mobile-icon-btn:active,
+  .mobile-notification-btn:active,
+  .mobile-avatar:active { transform: scale(.94); }
+
+  /* ── Content area ──────────────────────────────────────── */
+  .content-area {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    background: var(--bg-main) !important;
+    padding: 0 !important;
+    scroll-padding-bottom: calc(112px + env(safe-area-inset-bottom));
+  }
+
+  body:not(.chat-open):not(.hr-inbox-open) .page-stack {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 12px var(--m2-page-x) calc(106px + env(safe-area-inset-bottom)) !important;
+    gap: 12px !important;
+  }
+
+  .vayro-route-frame { min-height: 100% !important; }
+
+  /* ── Page headers ──────────────────────────────────────── */
+  .page-stack > header {
+    padding: 4px 2px 7px !important;
+    margin: 0 !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    align-items: start !important;
+    gap: 9px !important;
+  }
+
+  .page-stack > header h1,
+  .page-stack h1 {
+    font-size: clamp(22px, 6.2vw, 26px) !important;
+    line-height: 1.28 !important;
+    letter-spacing: -.025em !important;
+    text-wrap: balance;
+  }
+
+  .page-stack > header p {
+    font-size: 12.5px !important;
+    line-height: 1.7 !important;
+    color: var(--text-muted) !important;
+    max-width: 52ch !important;
+  }
+
+  .page-stack > header[style*='background'] {
+    padding: 18px !important;
+    border-radius: 20px !important;
+    overflow: hidden !important;
+    gap: 13px !important;
+    box-shadow: none !important;
+  }
+
+  .page-stack > header[style*='background'] h1 { font-size: 24px !important; color: #fff !important; }
+  .page-stack > header[style*='background'] p { color: rgba(255,255,255,.74) !important; }
+  .page-stack > header[style*='background'] > div:last-child {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+  .page-stack > header[style*='background'] > div:last-child > button,
+  .page-stack > header[style*='background'] > div:last-child > a {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* ── Cards & sections ──────────────────────────────────── */
+  .page-stack .card,
+  .page-stack .stat-card {
+    border-radius: var(--m2-radius-card) !important;
+    border: 1px solid var(--m2-border) !important;
+    padding: 15px !important;
+    box-shadow: 0 3px 16px rgba(6,40,30,.045) !important;
+    background: var(--bg-card) !important;
+  }
+
+  [data-theme='dark'] .page-stack .card,
+  [data-theme='dark'] .page-stack .stat-card {
+    box-shadow: 0 4px 18px rgba(0,0,0,.18) !important;
+  }
+
+  .page-stack h2 { font-size: 18px !important; line-height: 1.35 !important; }
+  .page-stack h3 { font-size: 15px !important; line-height: 1.42 !important; }
+  .page-stack p { font-size: 12.5px; line-height: 1.72; }
+
+  /* KPI rows should feel like a native dashboard, not a 4-screen list. */
+  body[data-vayro-route='dashboard'] .page-stack > section:first-of-type,
+  body[data-vayro-route='home'] .page-stack > section:first-of-type {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 9px !important;
+  }
+
+  body[data-vayro-route='dashboard'] .page-stack > section:first-of-type .card,
+  body[data-vayro-route='home'] .page-stack > section:first-of-type .card {
+    min-height: 124px !important;
+    padding: 13px !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+    flex-direction: column-reverse !important;
+    justify-content: space-between !important;
+  }
+
+  body[data-vayro-route='dashboard'] .page-stack > section:first-of-type .card > div:last-child,
+  body[data-vayro-route='home'] .page-stack > section:first-of-type .card > div:last-child {
+    width: 34px !important;
+    height: 34px !important;
+    min-width: 34px !important;
+    border-radius: 11px !important;
+  }
+
+  body[data-vayro-route='dashboard'] .page-stack > section:first-of-type .card h3,
+  body[data-vayro-route='home'] .page-stack > section:first-of-type .card h3 {
+    font-size: 19px !important;
+    line-height: 1.18 !important;
+  }
+
+  body[data-vayro-route='dashboard'] .page-stack > section:first-of-type .card p,
+  body[data-vayro-route='home'] .page-stack > section:first-of-type .card p {
+    font-size: 10.5px !important;
+    line-height: 1.5 !important;
+  }
+
+  /* Other authored desktop grids become one strong mobile column. */
+  .page-stack [style*='grid-template-columns']:not(body[data-vayro-route='dashboard'] .page-stack > section:first-of-type):not(body[data-vayro-route='home'] .page-stack > section:first-of-type) {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  /* ── Forms & actions ───────────────────────────────────── */
+  .page-stack input:not([type='checkbox']):not([type='radio']),
+  .page-stack select,
+  .page-stack textarea {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    border-radius: var(--m2-radius-control) !important;
+    font-size: 16px !important;
+    background: var(--bg-main) !important;
+    color: var(--text-main) !important;
+    border-color: var(--border-soft) !important;
+  }
+
+  .page-stack input:not([type='checkbox']):not([type='radio']),
+  .page-stack select { min-height: 48px !important; }
+  .page-stack textarea { min-height: 104px; }
+
+  .page-stack button,
+  .page-stack .button,
+  .page-stack .btn-primary,
+  .page-stack .btn-secondary,
+  .page-stack .btn-ghost,
+  .page-stack .btn-danger {
+    min-height: 44px !important;
+    border-radius: 13px !important;
+  }
+
+  .page-stack form > div[style*='justify-content: flex-end'],
+  .page-stack form > div:has(> .btn-primary):has(> .btn-secondary),
+  .page-stack form > div:has(> .btn-primary):has(> .btn-ghost) {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+
+  /* ── Tables ────────────────────────────────────────────── */
+  .page-stack .table-scroll,
+  .page-stack [style*='overflow-x: auto'] {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+  }
+
+  .page-stack table {
+    min-width: 620px !important;
+    font-size: 12px !important;
+    white-space: nowrap;
+  }
+
+  .page-stack table th,
+  .page-stack table td { padding: 11px 12px !important; }
+
+  /* ── Floating dock ─────────────────────────────────────── */
+  .mobile-tabbar {
+    position: fixed !important;
+    z-index: 260 !important;
+    left: 10px !important;
+    right: 10px !important;
+    bottom: max(8px, env(safe-area-inset-bottom)) !important;
+    width: auto !important;
+    min-height: var(--m2-dock-h) !important;
+    height: var(--m2-dock-h) !important;
+    display: grid !important;
+    grid-auto-flow: column !important;
+    grid-auto-columns: 1fr !important;
+    align-items: stretch !important;
+    padding: 5px !important;
+    border-radius: 22px !important;
+    background: color-mix(in srgb, var(--bg-card) 94%, transparent) !important;
+    border: 1px solid var(--m2-border) !important;
+    box-shadow: 0 12px 34px rgba(4,24,18,.16) !important;
+    backdrop-filter: blur(20px) saturate(1.15) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(1.15) !important;
+  }
+
+  .tab-item {
+    min-width: 0 !important;
+    min-height: 56px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 3px !important;
+    border-radius: 17px !important;
+    color: var(--text-faint) !important;
+    transition: transform .16s ease, color .16s ease, background .16s ease !important;
+  }
+
+  .tab-item .tab-icon {
+    width: 32px !important;
+    height: 28px !important;
+    display: grid !important;
+    place-items: center !important;
+    border-radius: 10px !important;
+  }
+
+  .tab-item span:last-child {
+    max-width: 70px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 10px !important;
+    line-height: 1 !important;
+    font-weight: 700 !important;
+  }
+
+  .tab-item.active {
+    color: var(--brand-primary) !important;
+    background: var(--brand-primary-soft) !important;
+  }
+
+  [data-theme='dark'] .tab-item.active { color: var(--brand-secondary) !important; }
+  .tab-item:active { transform: scale(.95); }
+
+  /* ── Modals / sheets ───────────────────────────────────── */
+  .page-stack [style*='position: fixed'][style*='inset: 0']:has(> .card),
+  .content-area [style*='position: fixed'][style*='inset: 0']:has(> .card) {
+    align-items: flex-end !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    background: rgba(3,18,14,.34) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+
+  .page-stack [style*='position: fixed'][style*='inset: 0'] > .card,
+  .content-area [style*='position: fixed'][style*='inset: 0'] > .card {
+    width: 100% !important;
+    max-width: none !important;
+    max-height: 91dvh !important;
+    margin: 0 !important;
+    border-radius: 28px 28px 0 0 !important;
+    padding-bottom: max(18px, env(safe-area-inset-bottom)) !important;
+    overflow-y: auto !important;
+    box-shadow: 0 -18px 55px rgba(4,24,18,.22) !important;
+  }
+
+  /* ── Command center as a true sheet ────────────────────── */
+  .vayro-command-launcher { display: none !important; }
+  .vayro-command-backdrop { align-items: flex-end !important; padding: 0 !important; }
+  .vayro-command-panel {
+    width: 100% !important;
+    max-width: none !important;
+    max-height: 86dvh !important;
+    border-radius: 28px 28px 0 0 !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
+  }
+
+  /* ── Assistant: mascot-first, not another giant floating card ───────── */
+  .vayro-assistant-fab {
+    z-index: 250 !important;
+    inset-inline-start: 14px !important;
+    bottom: calc(var(--m2-dock-h) + max(18px, env(safe-area-inset-bottom))) !important;
+    width: 58px !important;
+    height: 58px !important;
+    min-width: 58px !important;
+    min-height: 58px !important;
+    padding: 0 !important;
+    border-radius: 19px !important;
+    display: grid !important;
+    place-items: end center !important;
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-brand) !important;
+    box-shadow: 0 12px 30px rgba(6,78,59,.22) !important;
+    overflow: visible !important;
+  }
+
+  .vayro-assistant-fab-character {
+    width: 62px !important;
+    height: 62px !important;
+    position: absolute !important;
+    inset: auto -2px -1px auto !important;
+    pointer-events: none;
+  }
+
+  .vayro-assistant-fab-copy,
+  .vayro-assistant-fab > svg { display: none !important; }
+  body.chat-open .vayro-assistant-fab,
+  body.hr-inbox-open .vayro-assistant-fab { display: none !important; }
+
+  .vayro-assistant-backdrop {
+    z-index: 700 !important;
+    align-items: flex-end !important;
+    justify-content: stretch !important;
+    padding: 0 !important;
+    background: rgba(3,18,14,.38) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+
+  .vayro-assistant-panel {
+    width: 100% !important;
+    max-width: none !important;
+    height: min(82dvh, 720px) !important;
+    max-height: 82dvh !important;
+    border-radius: 28px 28px 0 0 !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
+  }
+
+  .vayro-assistant-head {
+    min-height: 132px !important;
+    grid-template-columns: 78px 1fr !important;
+    padding: 16px !important;
+  }
+  .vayro-assistant-head h2 { font-size: 17px !important; }
+  .vayro-assistant-head p { font-size: 12px !important; line-height: 1.6 !important; }
+  .vayro-assistant-chat { flex: 1 1 auto !important; min-height: 0 !important; max-height: none !important; }
+  .vayro-assistant-composer { padding: 10px 10px max(10px, env(safe-area-inset-bottom)) !important; }
+
+  /* ── AI workspace ──────────────────────────────────────── */
+  .vayro-ai-page { gap: 12px !important; }
+  .vayro-ai-hero {
+    min-height: 0 !important;
+    grid-template-columns: 1fr 92px !important;
+    gap: 8px !important;
+    align-items: center !important;
+    padding: 16px !important;
+    border-radius: 20px !important;
+  }
+  .vayro-ai-hero h1 {
+    max-width: 15ch !important;
+    margin: 6px 0 !important;
+    font-size: 23px !important;
+    line-height: 1.27 !important;
+  }
+  .vayro-ai-hero p { font-size: 11.5px !important; line-height: 1.62 !important; }
+  .vayro-ai-status { margin-top: 9px !important; font-size: 10.5px !important; padding: 5px 8px !important; }
+  .vayro-ai-hero-character { transform: scale(.82); transform-origin: center; }
+  .vayro-ai-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+  .vayro-ai-form-grid { grid-template-columns: 1fr !important; gap: 10px !important; }
+  .vayro-ai-form-grid .wide { grid-column: auto !important; }
+  .vayro-ai-messages { min-height: 260px !important; max-height: 330px !important; }
+  .vayro-ai-settings > header,
+  .vayro-ai-preview > header,
+  .vayro-ai-knowledge > header { margin-bottom: 13px !important; }
+
+  /* ── Support inbox & HR inbox keep full-screen ownership ── */
+  body[data-vayro-route='support-inbox'] .content-area,
+  body[data-vayro-route='hr-inbox'] .content-area { padding-bottom: 0 !important; }
+
+  body.chat-open .mobile-topbar,
+  body.hr-inbox-open .mobile-topbar { display: none !important; }
+
+  /* ── Login: brand character stays visible on phone ─────── */
+  .vayro-login-page {
+    min-height: 100dvh !important;
+    padding: 0 !important;
+    background: var(--bg-main) !important;
+    overflow-y: auto !important;
+  }
+  .vayro-login-shell {
+    width: 100% !important;
+    min-height: 100dvh !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: var(--bg-card) !important;
+  }
+  .vayro-login-form-side {
+    min-height: 100dvh !important;
+    padding: calc(20px + env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom)) !important;
+    justify-content: flex-start !important;
+    background: var(--bg-card) !important;
+  }
+  .vayro-login-mobile-brand { margin-bottom: 10px !important; }
+  .vayro-login-mobile-mascot {
+    display: grid !important;
+    place-items: center !important;
+    height: 116px !important;
+    margin: 2px 0 8px !important;
+  }
+  .vayro-login-heading { margin-bottom: 18px !important; gap: 10px !important; }
+  .vayro-login-heading h2 { font-size: 24px !important; }
+  .vayro-login-heading p { font-size: 12.5px !important; line-height: 1.6 !important; }
+  .vayro-login-form { gap: 14px !important; }
+  .vayro-login-input,
+  .vayro-login-submit { height: 50px !important; border-radius: 14px !important; }
+  .vayro-login-help { margin-top: 18px !important; font-size: 11.5px !important; line-height: 1.7 !important; }
+
+  /* ── Welcome onboarding ─────────────────────────────────── */
+  .mobile-welcome-overlay { padding: 0 !important; }
+  .mobile-welcome-sheet {
+    width: 100% !important;
+    max-width: none !important;
+    border-radius: 30px 30px 0 0 !important;
+    padding: 16px 16px max(18px, env(safe-area-inset-bottom)) !important;
+  }
+  .mobile-welcome-content { min-height: 285px !important; gap: 9px !important; }
+  .mobile-welcome-content h2 { font-size: 20px !important; }
+  .mobile-welcome-content p { font-size: 12.5px !important; line-height: 1.72 !important; }
+
+  /* Keep long words / ids from destroying the viewport. */
+  .page-stack, .page-stack *, .content-area, .content-area * {
+    min-width: 0;
+  }
+  .page-stack code,
+  .page-stack pre,
+  .page-stack [dir='ltr'] { overflow-wrap: anywhere; }
+}
+
+@media (max-width: 390px) {
+  :root { --m2-page-x: 10px; }
+
+  .mobile-topbar { padding-inline: 10px !important; }
+  .mobile-topbar-title { max-width: 37vw; font-size: 14px !important; }
+  .mobile-icon-btn,
+  .mobile-notification-btn,
+  .mobile-global-back,
+  .mobile-avatar { width: 38px !important; height: 38px !important; min-width: 38px !important; min-height: 38px !important; }
+
+  body[data-vayro-route='dashboard'] .page-stack > section:first-of-type,
+  body[data-vayro-route='home'] .page-stack > section:first-of-type { grid-template-columns: 1fr 1fr !important; }
+
+  .page-stack > header[style*='background'] > div:last-child { grid-template-columns: 1fr !important; }
+  .page-stack form > div[style*='justify-content: flex-end'] { grid-template-columns: 1fr !important; }
+
+  .vayro-ai-hero { grid-template-columns: 1fr 76px !important; }
+  .vayro-ai-hero h1 { font-size: 21px !important; }
+
+  .mobile-tabbar { left: 7px !important; right: 7px !important; }
+  .tab-item span:last-child { font-size: 9.5px !important; }
+}
+
+@media (prefers-reduced-motion: reduce) and (max-width: 768px) {
+  .mobile-tabbar,
+  .tab-item,
+  .vayro-assistant-fab { transition: none !important; }
+}

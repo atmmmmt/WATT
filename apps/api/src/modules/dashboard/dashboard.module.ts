@@ -8,6 +8,8 @@ import { UsersModule } from '../users/users.module';
 import { WhatsappSessionsModule } from '../whatsapp-sessions/whatsapp-sessions.module';
 import { DashboardController } from './dashboard.controller';
 import { DashboardService } from './dashboard.service';
+import { ServerMetricsController } from './server-metrics.controller';
+import { ServerMetricsService } from './server-metrics.service';
 
 @Module({
   imports: [
@@ -19,7 +21,7 @@ import { DashboardService } from './dashboard.service';
     ProvidersModule,
     WhatsappSessionsModule,
   ],
-  controllers: [DashboardController],
-  providers: [DashboardService],
+  controllers: [DashboardController, ServerMetricsController],
+  providers: [DashboardService, ServerMetricsService],
 })
 export class DashboardModule {}

@@ -48,6 +48,13 @@ export class TenantsController {
     return this.tenantsService.updateProducts(tenantId, dto.enabledProducts);
   }
 
+  @Post(':tenantId/send-password-reset')
+  @Roles(UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Send a password reset email to the tenant administrator' })
+  sendPasswordReset(@Param('tenantId') tenantId: string) {
+    return this.tenantsService.sendPasswordReset(tenantId);
+  }
+
   @Delete(':tenantId')
   @Roles(UserRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Delete a tenant and all related tenant data' })

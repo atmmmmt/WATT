@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiProperty, ApiTags } from '@nestjs/swagger';
 import { IsMongoId, IsOptional } from 'class-validator';
+import { Types } from 'mongoose';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -32,6 +33,15 @@ export class WhatsappSessionsController {
     private readonly whatsappSessionsService: WhatsappSessionsService,
   ) {}
 
+  private assertValidTenantId(tenantId?: string | null): asserts tenantId is string {
+    if (!tenantId) {
+      throw new BadRequestException('tenantId is required');
+    }
+    if (!Types.ObjectId.isValid(tenantId)) {
+      throw new BadRequestException('tenantId is invalid');
+    }
+  }
+
   @Post('start')
   @Roles(
     UserRole.SUPER_ADMIN,
@@ -45,10 +55,8 @@ export class WhatsappSessionsController {
     @CurrentUser() user: { role: UserRole; tenantId: string | null },
   ) {
     const tenantId =
-      user.role === UserRole.SUPER_ADMIN ? dto.tenantId : (user.tenantId as string);
-    if (!tenantId) {
-      throw new BadRequestException('tenantId is required');
-    }
+      user.role === UserRole.SUPER_ADMIN ? dto.tenantId : user.tenantId;
+    this.assertValidTenantId(tenantId);
     return this.whatsappSessionsService.startSession(tenantId);
   }
 
@@ -65,10 +73,8 @@ export class WhatsappSessionsController {
     @CurrentUser() user: { role: UserRole; tenantId: string | null },
   ) {
     const tenantId =
-      user.role === UserRole.SUPER_ADMIN ? dto.tenantId : (user.tenantId as string);
-    if (!tenantId) {
-      throw new BadRequestException('tenantId is required');
-    }
+      user.role === UserRole.SUPER_ADMIN ? dto.tenantId : user.tenantId;
+    this.assertValidTenantId(tenantId);
     return this.whatsappSessionsService.disconnectSession(tenantId);
   }
 
@@ -86,7 +92,8 @@ export class WhatsappSessionsController {
     @CurrentUser() user: { role: UserRole; tenantId: string | null },
   ) {
     const tenantId =
-      user.role === UserRole.SUPER_ADMIN ? paramTenantId : (user.tenantId as string);
+      user.role === UserRole.SUPER_ADMIN ? paramTenantId : user.tenantId;
+    this.assertValidTenantId(tenantId);
     return this.whatsappSessionsService.getSession(tenantId);
   }
 }

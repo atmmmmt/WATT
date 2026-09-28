@@ -5,6 +5,13 @@
 - Admin dashboard: `https://whatsapp-otp.prootech-agency.com`
 - API and Swagger: `https://api.prootech-cloud.com`
 
+## Runtime requirements
+
+- Node.js `20+` (Node.js 22 LTS is recommended for the server).
+- MongoDB.
+- PM2 and Nginx/reverse proxy in production.
+- Chromium/Puppeteer is not required. The active WhatsApp transport uses Baileys WebSocket sessions and stores Baileys credentials/Signal keys in MongoDB.
+
 ## Local vs production
 
 - Local development stays on `localhost`.
@@ -22,6 +29,13 @@ Dashboard production:
 
 - `VITE_API_BASE_URL=https://api.prootech-cloud.com`
 
+Optional WhatsApp memory/cache tuning:
+
+- `WA_MESSAGE_CACHE_LIMIT=1000`
+- `WA_HISTORY_CHAT_LIMIT=100`
+- `WA_HISTORY_MESSAGE_LIMIT=100`
+- `WA_DISABLE_SESSIONS=false`
+
 ## Build
 
 From the project root:
@@ -30,6 +44,8 @@ From the project root:
 npm install
 npm run build
 ```
+
+`npm install` is required on the first deploy of the Baileys migration so the new runtime dependency is installed and the lock file can be refreshed on the deployment checkout.
 
 ## Deploy the API
 
@@ -67,6 +83,16 @@ pm2 save
 ```
 
 8. Put a reverse proxy in front of port `4000` and point `api.prootech-cloud.com` to it.
+
+## WhatsApp session migration
+
+The active WhatsApp provider is now Baileys rather than the Chromium-based `whatsapp-web.js` client.
+
+- Existing application chat IDs remain compatible through the adapter (`@c.us` externally, Baileys JIDs internally).
+- OTP, HR, Shared Inbox and Doctor/Client Privacy Relay continue to use the same `WhatsappSessionsService` token.
+- Baileys authentication and Signal keys are stored in MongoDB collection `whatsapp_baileys_auth`.
+- Existing `whatsapp-web.js` LocalAuth sessions cannot be converted into Baileys Signal credentials. Each already-connected tenant must scan one fresh QR the first time it moves to the Baileys engine. After that, restarts restore the Baileys session from MongoDB without another QR unless WhatsApp logs the device out.
+- Do not run two API instances against the same tenant sessions unless a worker ownership/distributed-lock layer is enabled. For maintenance copies set `WA_DISABLE_SESSIONS=true`.
 
 ## Deploy the dashboard
 

@@ -14,6 +14,11 @@ import {
   TrendingUp,
   Users,
   Zap,
+  MessageSquare,
+  Briefcase,
+  ShieldCheck,
+  KeyRound,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE_URL, apiRequest } from '../lib/api';
@@ -23,63 +28,37 @@ type TenantProduct = 'otp' | 'support' | 'hr' | 'doctor_relay';
 type ProviderType = 'mock' | 'whatsapp_web' | 'twilio';
 type OtpTemplateKey = 'login' | 'register' | 'forgotPassword';
 
-type PresetPlan = {
-  id: string;
-  name: string;
-  price: number;
-  quota: number;
-  duration: number;
-  products: TenantProduct[];
+type ProductOption = {
+  value: TenantProduct;
+  label: string;
+  description: string;
+  icon: React.ReactNode;
 };
 
-const PRESET_PLANS: PresetPlan[] = [
+const PRODUCT_OPTIONS: ProductOption[] = [
   {
-    id: 'otp',
-    name: 'خدمة واتساب OTP',
-    price: 49,
-    quota: 1000,
-    duration: 12,
-    products: ['otp'],
+    value: 'otp',
+    label: 'واتساب OTP',
+    description: 'إرسال رموز التحقق وتأكيد الدخول والتسجيل عبر واتساب.',
+    icon: <Zap size={20} />,
   },
   {
-    id: 'support',
-    name: 'صندوق الدعم المشترك',
-    price: 149,
-    quota: 5000,
-    duration: 12,
-    products: ['support'],
+    value: 'support',
+    label: 'الصندوق المشترك',
+    description: 'صندوق واتساب موحد للفريق مع التعيين والردود والمتابعة.',
+    icon: <MessageSquare size={20} />,
   },
   {
-    id: 'hr',
-    name: 'منصة التوظيف',
-    price: 149,
-    quota: 5000,
-    duration: 12,
-    products: ['hr'],
+    value: 'hr',
+    label: 'التوظيف',
+    description: 'إدارة الوظائف والمتقدمين ومراسلتهم من داخل VAYRO.',
+    icon: <Briefcase size={20} />,
   },
   {
-    id: 'doctor_relay',
-    name: 'توجيه الأطباء (خصوصية)',
-    price: 199,
-    quota: 5000,
-    duration: 12,
-    products: ['doctor_relay'],
-  },
-  {
-    id: 'support_doctor_relay',
-    name: 'صندوق الدعم + توجيه الأطباء',
-    price: 299,
-    quota: 5000,
-    duration: 12,
-    products: ['support', 'doctor_relay'],
-  },
-  {
-    id: 'all',
-    name: 'الباقة الشاملة',
-    price: 299,
-    quota: 25000,
-    duration: 12,
-    products: ['otp', 'support', 'hr', 'doctor_relay'],
+    value: 'doctor_relay',
+    label: 'الخصوصية / التوجيه',
+    description: 'ربط طرفين عبر رقم VAYRO بدون كشف رقم أي طرف للطرف الآخر.',
+    icon: <ShieldCheck size={20} />,
   },
 ];
 
@@ -127,6 +106,24 @@ interface Tenant {
   } | null;
 }
 
+function createInitialForm() {
+  return {
+    name: '',
+    slug: '',
+    contactEmail: '',
+    adminName: '',
+    adminEmail: '',
+    planName: 'خدمة واتساب OTP',
+    price: '49',
+    currency: 'USD',
+    durationMonths: '12',
+    maxMonthlyOtp: '1000',
+    providerType: 'whatsapp_web' as ProviderType,
+    enabledProducts: ['otp'] as TenantProduct[],
+    otpTemplates: { ...DEFAULT_OTP_TEMPLATES },
+  };
+}
+
 function buildSubscriptionEndLabel(months: number) {
   const endsAt = new Date();
   endsAt.setMonth(endsAt.getMonth() + months);
@@ -165,14 +162,14 @@ function downloadJson(filename: string, data: unknown) {
 function normalizeOtpTemplates(
   templates: Record<OtpTemplateKey, string>,
 ): Partial<Record<OtpTemplateKey, string>> {
-  return (Object.entries(templates) as [OtpTemplateKey, string][])
-    .reduce((acc, [key, value]) => {
+  return (Object.entries(templates) as [OtpTemplateKey, string][]).reduce(
+    (acc, [key, value]) => {
       const normalized = value.trim();
-      if (normalized) {
-        acc[key] = normalized;
-      }
+      if (normalized) acc[key] = normalized;
       return acc;
-    }, {} as Partial<Record<OtpTemplateKey, string>>);
+    },
+    {} as Partial<Record<OtpTemplateKey, string>>,
+  );
 }
 
 function buildEffectiveOtpTemplates(
@@ -186,6 +183,16 @@ function buildEffectiveOtpTemplates(
   };
 }
 
+function productLabel(product: TenantProduct) {
+  return PRODUCT_OPTIONS.find((option) => option.value === product)?.label || product;
+}
+
+function autoPlanName(products: TenantProduct[]) {
+  if (products.length === PRODUCT_OPTIONS.length) return 'الباقة الشاملة';
+  if (!products.length) return 'باقة مخصصة';
+  return products.map(productLabel).join(' + ');
+}
+
 export function TenantsPage() {
   const { token } = useAuth();
   const [tenants, setTenants] = useState<Tenant[]>([]);
@@ -193,26 +200,11 @@ export function TenantsPage() {
   const [search, setSearch] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [resettingTenantId, setResettingTenantId] = useState<string | null>(null);
   const [editingProductsTenant, setEditingProductsTenant] = useState<Tenant | null>(null);
   const [editingProductsSelection, setEditingProductsSelection] = useState<TenantProduct[]>([]);
   const [savingProducts, setSavingProducts] = useState(false);
-
-  const [form, setForm] = useState({
-    name: '',
-    slug: '',
-    contactEmail: '',
-    adminName: '',
-    adminEmail: '',
-    selectedPlanId: 'otp',
-    planName: 'خدمة واتساب OTP',
-    price: '49',
-    currency: 'USD',
-    durationMonths: '12',
-    maxMonthlyOtp: '1000',
-    providerType: 'whatsapp_web' as ProviderType,
-    enabledProducts: ['otp'] as TenantProduct[],
-    otpTemplates: { ...DEFAULT_OTP_TEMPLATES },
-  });
+  const [form, setForm] = useState(createInitialForm);
 
   const otpSelected = form.enabledProducts.includes('otp');
 
@@ -233,9 +225,29 @@ export function TenantsPage() {
     loadData();
   }, [token]);
 
+  function toggleFormProduct(product: TenantProduct) {
+    setForm((current) => {
+      const enabledProducts = current.enabledProducts.includes(product)
+        ? current.enabledProducts.filter((item) => item !== product)
+        : [...current.enabledProducts, product];
+
+      return {
+        ...current,
+        enabledProducts,
+        planName: autoPlanName(enabledProducts),
+        providerType: 'whatsapp_web',
+        maxMonthlyOtp: enabledProducts.includes('otp') ? current.maxMonthlyOtp || '1000' : '0',
+      };
+    });
+  }
+
   async function handleQuickOnboarding(event: FormEvent) {
     event.preventDefault();
     if (!token) return;
+    if (!form.enabledProducts.length) {
+      alert('اختر خدمة واحدة على الأقل للعميل.');
+      return;
+    }
 
     setBusy(true);
     try {
@@ -264,11 +276,11 @@ export function TenantsPage() {
           method: 'POST',
           body: JSON.stringify({
             tenantId,
-            planName: form.planName,
+            planName: form.planName || autoPlanName(form.enabledProducts),
             price: Number(form.price),
             currency: form.currency,
             durationMonths: Number(form.durationMonths),
-            maxMonthlyOtp: Number(form.maxMonthlyOtp),
+            maxMonthlyOtp: otpSelected ? Number(form.maxMonthlyOtp) : 0,
           }),
         },
         token,
@@ -288,7 +300,7 @@ export function TenantsPage() {
         token,
       );
 
-      if (form.enabledProducts.includes('otp')) {
+      if (otpSelected) {
         const effectiveOtpTemplates = buildEffectiveOtpTemplates(
           normalizeOtpTemplates(form.otpTemplates),
         );
@@ -326,28 +338,12 @@ export function TenantsPage() {
           verifyEndpoint: createdApiKey.setupPackage.endpoints.verifyOtp,
           sessionStartEndpoint: createdApiKey.setupPackage.endpoints.sessionStart,
           sessionStatusEndpoint: createdApiKey.setupPackage.endpoints.sessionStatus,
-          sessionDisconnectEndpoint:
-            createdApiKey.setupPackage.endpoints.sessionDisconnect,
+          sessionDisconnectEndpoint: createdApiKey.setupPackage.endpoints.sessionDisconnect,
         });
       }
 
       setShowAddModal(false);
-      setForm({
-        name: '',
-        slug: '',
-        contactEmail: '',
-        adminName: '',
-        adminEmail: '',
-        selectedPlanId: 'otp',
-        planName: 'خدمة واتساب OTP',
-        price: '49',
-        currency: 'USD',
-        durationMonths: '12',
-        maxMonthlyOtp: '1000',
-        providerType: 'whatsapp_web',
-        enabledProducts: ['otp'],
-        otpTemplates: { ...DEFAULT_OTP_TEMPLATES },
-      });
+      setForm(createInitialForm());
       await loadData();
     } catch (error) {
       alert(`تعذر إنشاء العميل: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`);
@@ -358,34 +354,23 @@ export function TenantsPage() {
 
   async function handleDownloadGuides(tenant: Tenant) {
     if (!token) return;
-
     const tenantId = tenant.id || tenant._id || '';
     if (!tenantId) return;
 
     try {
-      const setupPackage = await apiRequest<any>(
-        `/tenants/${tenantId}/setup-package`,
-        {},
-        token,
-      );
-
-      const enabledProducts =
-        setupPackage.tenant?.enabledProducts || tenant.enabledProducts || ['otp'];
-
+      const setupPackage = await apiRequest<any>(`/tenants/${tenantId}/setup-package`, {}, token);
+      const enabledProducts = setupPackage.tenant?.enabledProducts || tenant.enabledProducts || ['otp'];
       const common = {
         tenantName: tenant.name,
         tenantId,
         contactEmail: tenant.contactEmail,
-        planName: tenant.subscription?.planName || 'خدمة واتساب OTP',
+        planName: tenant.subscription?.planName || 'باقة VAYRO',
         subscriptionEnd: tenant.subscription?.endsAt
           ? new Date(tenant.subscription.endsAt).toLocaleDateString('ar-SY')
           : '---',
         monthlyQuota: tenant.subscription?.maxMonthlyOtp || 0,
         priceLabel: `$${tenant.subscription?.price || 0}`,
-        providerType:
-          setupPackage.provider?.providerType ||
-          tenant.provider?.providerType ||
-          'mock',
+        providerType: setupPackage.provider?.providerType || tenant.provider?.providerType || 'mock',
         apiBaseUrl: API_BASE_URL,
         dashboardUrl: setupPackage.portal?.dashboardUrl || window.location.origin,
         portalEmail: setupPackage.portal?.loginEmail || tenant.contactEmail,
@@ -400,10 +385,7 @@ export function TenantsPage() {
         const confirmed = window.confirm(
           'سيتم إصدار API Key جديد للتسليم لأن المفتاح الخام لا يمكن استرجاعه بعد إنشائه. هل تريد المتابعة؟',
         );
-
-        if (!confirmed) {
-          return;
-        }
+        if (!confirmed) return;
 
         const createdApiKey = await apiRequest<any>(
           '/api-keys',
@@ -427,15 +409,12 @@ export function TenantsPage() {
           verifyEndpoint: createdApiKey.setupPackage.endpoints.verifyOtp,
           sessionStartEndpoint: createdApiKey.setupPackage.endpoints.sessionStart,
           sessionStatusEndpoint: createdApiKey.setupPackage.endpoints.sessionStatus,
-          sessionDisconnectEndpoint:
-            createdApiKey.setupPackage.endpoints.sessionDisconnect,
+          sessionDisconnectEndpoint: createdApiKey.setupPackage.endpoints.sessionDisconnect,
         });
       }
-
       if (enabledProducts.includes('support')) {
         await exportClientPackagePdf({ ...common, type: 'support' });
       }
-
       if (enabledProducts.includes('hr')) {
         await exportClientPackagePdf({ ...common, type: 'hr' });
       }
@@ -448,16 +427,38 @@ export function TenantsPage() {
     if (!token) return;
     const tenantId = tenant.id || tenant._id || '';
     if (!tenantId) return;
-
     try {
-      const setupPackage = await apiRequest<any>(
-        `/tenants/${tenantId}/setup-package`,
-        {},
-        token,
-      );
+      const setupPackage = await apiRequest<any>(`/tenants/${tenantId}/setup-package`, {}, token);
       downloadJson(`${tenant.slug}-setup.json`, setupPackage);
     } catch (error) {
       alert(`تعذر تحميل ملف الإعداد: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`);
+    }
+  }
+
+  async function handleSendPasswordReset(tenant: Tenant) {
+    if (!token) return;
+    const tenantId = tenant.id || tenant._id || '';
+    if (!tenantId) return;
+
+    const confirmed = window.confirm(
+      `سيتم إرسال رابط آمن لإعادة تعيين كلمة المرور إلى مدير العميل "${tenant.name}". هل تريد المتابعة؟`,
+    );
+    if (!confirmed) return;
+
+    setResettingTenantId(tenantId);
+    try {
+      const result = await apiRequest<{ success: boolean; email: string }>(
+        `/tenants/${tenantId}/send-password-reset`,
+        { method: 'POST' },
+        token,
+      );
+      alert(`تم إرسال رابط إعادة تعيين كلمة المرور إلى ${result.email}`);
+    } catch (error) {
+      alert(
+        `تعذر إرسال رابط إعادة التعيين: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`,
+      );
+    } finally {
+      setResettingTenantId(null);
     }
   }
 
@@ -465,7 +466,6 @@ export function TenantsPage() {
     if (!token) return;
     const tenantId = tenant.id || tenant._id;
     if (!tenantId) return;
-
     const confirmed = window.confirm(
       `سيتم حذف العميل "${tenant.name}" مع كل بياناته نهائياً. هل تريد المتابعة؟`,
     );
@@ -474,9 +474,7 @@ export function TenantsPage() {
     setBusy(true);
     try {
       await apiRequest(`/tenants/${tenantId}`, { method: 'DELETE' }, token);
-      setTenants((current) =>
-        current.filter((item) => (item.id || item._id) !== tenantId),
-      );
+      setTenants((current) => current.filter((item) => (item.id || item._id) !== tenantId));
     } catch (error) {
       alert(`تعذر حذف العميل: ${error instanceof Error ? error.message : 'خطأ غير معروف'}`);
     } finally {
@@ -501,6 +499,10 @@ export function TenantsPage() {
     if (!token || !editingProductsTenant) return;
     const tenantId = editingProductsTenant.id || editingProductsTenant._id;
     if (!tenantId) return;
+    if (!editingProductsSelection.length) {
+      alert('اختر خدمة واحدة على الأقل.');
+      return;
+    }
 
     setSavingProducts(true);
     try {
@@ -525,38 +527,12 @@ export function TenantsPage() {
   }
 
   const stats = useMemo(() => {
-    const totalRevenue = tenants.reduce(
-      (acc, tenant) => acc + (tenant.subscription?.price || 0),
-      0,
-    );
-
+    const totalRevenue = tenants.reduce((acc, tenant) => acc + (tenant.subscription?.price || 0), 0);
     return [
-      {
-        label: 'إجمالي الإيرادات',
-        value: `$${totalRevenue.toLocaleString()}`,
-        icon: <DollarSign />,
-        color: '#064E3B',
-      },
-      {
-        label: 'العملاء النشطون',
-        value: tenants.length,
-        icon: <Users />,
-        color: '#10b981',
-      },
-      {
-        label: 'متوسط العائد/عميل',
-        value: `$${Math.round(totalRevenue / (tenants.length || 1)).toLocaleString()}`,
-        icon: <TrendingUp />,
-        color: '#3b82f6',
-      },
-      {
-        label: 'حصة OTP الشهرية',
-        value: tenants
-          .reduce((acc, tenant) => acc + (tenant.subscription?.maxMonthlyOtp || 0), 0)
-          .toLocaleString(),
-        icon: <Zap />,
-        color: '#f59e0b',
-      },
+      { label: 'إجمالي الإيرادات', value: `$${totalRevenue.toLocaleString()}`, icon: <DollarSign />, color: '#064E3B' },
+      { label: 'العملاء النشطون', value: tenants.length, icon: <Users />, color: '#10b981' },
+      { label: 'متوسط العائد/عميل', value: `$${Math.round(totalRevenue / (tenants.length || 1)).toLocaleString()}`, icon: <TrendingUp />, color: '#3b82f6' },
+      { label: 'حصة OTP الشهرية', value: tenants.reduce((acc, tenant) => acc + (tenant.subscription?.maxMonthlyOtp || 0), 0).toLocaleString(), icon: <Zap />, color: '#f59e0b' },
     ];
   }, [tenants]);
 
@@ -566,20 +542,23 @@ export function TenantsPage() {
       tenant.slug.toLowerCase().includes(search.toLowerCase()),
   );
 
+  const productCardStyle = (selected: boolean) => ({
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: '0.8rem',
+    padding: '1rem',
+    borderRadius: '12px',
+    border: selected ? '2px solid var(--brand-primary)' : '1px solid var(--border-soft)',
+    background: selected ? 'rgba(6,78,59,0.06)' : 'white',
+    cursor: 'pointer',
+    transition: 'all .18s ease',
+  });
+
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="page-stack"
-      dir="rtl"
-    >
-      <header
-        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-      >
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="page-stack" dir="rtl">
+      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-            إدارة العملاء والاشتراكات
-          </p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>إدارة العملاء والاشتراكات</p>
           <h1 style={{ fontSize: '2rem', fontWeight: 800 }}>العملاء والاشتراكات</h1>
         </div>
         <button className="btn-primary" onClick={() => setShowAddModal(true)}>
@@ -587,739 +566,268 @@ export function TenantsPage() {
         </button>
       </header>
 
-      <section
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: '1.5rem',
-        }}
-      >
+      <section style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
         {stats.map((item, index) => (
           <motion.div
             key={item.label}
-            initial={{ y: 20, opacity: 0 }}
+            initial={{ y: 16, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: index * 0.08 }}
+            transition={{ delay: index * 0.06 }}
             className="card"
-            style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}
           >
-            <div
-              style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '12px',
-                background: `${item.color}15`,
-                color: item.color,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
+            <div style={{ width: 44, height: 44, borderRadius: 12, background: `${item.color}15`, color: item.color, display: 'grid', placeItems: 'center' }}>
               {item.icon}
             </div>
             <div>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                {item.label}
-              </p>
-              <h3 style={{ fontSize: '1.5rem', fontWeight: 700 }}>{item.value}</h3>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{item.label}</p>
+              <h3 style={{ fontSize: '1.35rem', fontWeight: 800 }}>{item.value}</h3>
             </div>
           </motion.div>
         ))}
       </section>
 
-      <div
-        className="card"
-        style={{
-          padding: '1rem 1.5rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <div style={{ position: 'relative', width: '360px' }}>
-          <Search
-            size={18}
-            style={{
-              position: 'absolute',
-              right: '1rem',
-              top: '50%',
-              transform: 'translateY(-50%)',
-              color: 'var(--text-muted)',
-            }}
-          />
+      <div className="card" style={{ padding: '1rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+        <div style={{ position: 'relative', width: 'min(360px, 100%)' }}>
+          <Search size={18} style={{ position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input
             placeholder="ابحث عن عميل..."
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            style={{
-              paddingRight: '2.75rem',
-              background: 'var(--bg-main)',
-              border: 'none',
-            }}
+            style={{ paddingRight: '2.75rem', background: 'var(--bg-main)', border: 'none' }}
           />
         </div>
-        <button className="btn-secondary" onClick={loadData}>
-          <Settings size={18} /> تحديث البيانات
-        </button>
+        <button className="btn-secondary" onClick={loadData}><Settings size={18} /> تحديث البيانات</button>
       </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
-          gap: '1.5rem',
-        }}
-      >
-        {loading ? (
-          <p>جاري التحميل...</p>
-        ) : (
-          filteredTenants.map((tenant, index) => {
-            const connectionStatus = getConnectionStatus(tenant);
-            return (
-              <motion.div
-                key={tenant.id || tenant._id}
-                initial={{ scale: 0.95, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                transition={{ delay: index * 0.04 }}
-                className="card"
-                style={{ padding: 0, overflow: 'hidden' }}
-              >
-                <div
-                  style={{
-                    padding: '1.5rem',
-                    borderBottom: '1px solid var(--border-soft)',
-                    background: 'var(--bg-main)',
-                  }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-start',
-                      marginBottom: '1rem',
-                    }}
-                  >
-                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                      <div
-                        style={{
-                          width: '48px',
-                          height: '48px',
-                          borderRadius: '12px',
-                          background: 'white',
-                          border: '1px solid var(--border-soft)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: 800,
-                          color: '#064E3B',
-                        }}
-                      >
-                        {tenant.name[0]}
-                      </div>
-                      <div>
-                        <h4 style={{ fontWeight: 700 }}>{tenant.name}</h4>
-                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                          {tenant.slug}.vayro.com
-                        </p>
-                      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '1.25rem' }}>
+        {loading ? <p>جاري التحميل...</p> : filteredTenants.map((tenant, index) => {
+          const connectionStatus = getConnectionStatus(tenant);
+          const products = tenant.enabledProducts || [];
+          const tenantId = tenant.id || tenant._id || '';
+          const resettingPassword = resettingTenantId === tenantId;
+          return (
+            <motion.div
+              key={tenant.id || tenant._id}
+              initial={{ scale: 0.97, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: index * 0.03 }}
+              className="card"
+              style={{ padding: 0, overflow: 'hidden' }}
+            >
+              <div style={{ padding: '1.4rem', borderBottom: '1px solid var(--border-soft)', background: 'var(--bg-main)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                  <div style={{ display: 'flex', gap: '0.9rem', alignItems: 'center' }}>
+                    <div style={{ width: 46, height: 46, borderRadius: 12, background: 'white', border: '1px solid var(--border-soft)', display: 'grid', placeItems: 'center', fontWeight: 800, color: '#064E3B' }}>
+                      {tenant.name[0]}
                     </div>
-                    <span
-                      className={`badge badge-${tenant.status === 'active' ? 'success' : 'warning'}`}
-                    >
-                      {tenant.status === 'active' ? 'نشط' : 'مراجعة'}
-                    </span>
+                    <div>
+                      <h4 style={{ fontWeight: 800 }}>{tenant.name}</h4>
+                      <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{tenant.slug}.vayro.com</p>
+                    </div>
                   </div>
+                  <span className={`badge badge-${tenant.status === 'active' ? 'success' : 'warning'}`}>
+                    {tenant.status === 'active' ? 'نشط' : 'مراجعة'}
+                  </span>
+                </div>
 
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '1fr 1fr',
-                      gap: '1rem',
-                    }}
-                  >
-                    <div
-                      style={{
-                        background: 'white',
-                        padding: '0.75rem',
-                        borderRadius: '8px',
-                        border: '1px solid var(--border-soft)',
-                      }}
-                    >
-                      <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                        قيمة الاشتراك
-                      </p>
-                      <p style={{ fontWeight: 700, color: '#064E3B' }}>
-                        ${tenant.subscription?.price || 0}
-                      </p>
-                    </div>
-                    <div
-                      style={{
-                        background: 'white',
-                        padding: '0.75rem',
-                        borderRadius: '8px',
-                        border: '1px solid var(--border-soft)',
-                      }}
-                    >
-                      <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                        حالة الربط
-                      </p>
-                      <p
-                        style={{
-                          fontWeight: 700,
-                          color: connectionStatus.color,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.25rem',
-                        }}
-                      >
-                        <CheckCircle2 size={14} /> {connectionStatus.label}
-                      </p>
-                    </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  <div style={{ background: 'white', padding: '0.75rem', borderRadius: 8, border: '1px solid var(--border-soft)' }}>
+                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>قيمة الاشتراك</p>
+                    <p style={{ fontWeight: 800, color: '#064E3B' }}>${tenant.subscription?.price || 0}</p>
+                  </div>
+                  <div style={{ background: 'white', padding: '0.75rem', borderRadius: 8, border: '1px solid var(--border-soft)' }}>
+                    <p style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>حالة الربط</p>
+                    <p style={{ fontWeight: 800, color: connectionStatus.color, display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <CheckCircle2 size={14} /> {connectionStatus.label}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ padding: '1.4rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div style={{ fontSize: '0.84rem' }}><Package size={14} /> الباقة: {tenant.subscription?.planName || 'غير مفعلة'}</div>
+                <div style={{ fontSize: '0.84rem' }}><Calendar size={14} /> ينتهي: {tenant.subscription?.endsAt ? new Date(tenant.subscription.endsAt).toLocaleDateString('ar-SY') : '---'}</div>
+                <div>
+                  <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginBottom: '0.45rem' }}>الخدمات المفعلة</p>
+                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                    {products.length ? products.map((product) => (
+                      <span key={product} className="badge" style={{ background: 'rgba(6,78,59,.08)', color: 'var(--brand-primary)', border: '1px solid rgba(6,78,59,.12)' }}>
+                        {productLabel(product)}
+                      </span>
+                    )) : <span style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>لا توجد خدمات</span>}
                   </div>
                 </div>
 
-                <div
-                  style={{
-                    padding: '1.5rem',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '0.75rem',
-                  }}
+                <button
+                  className="btn-secondary"
+                  style={{ width: '100%', fontSize: '0.8rem', marginTop: '0.35rem' }}
+                  onClick={() => handleSendPasswordReset(tenant)}
+                  disabled={resettingPassword}
                 >
-                  <div style={{ fontSize: '0.85rem' }}>
-                    <Package size={14} /> الباقة: {tenant.subscription?.planName || 'غير مفعلة'}
-                  </div>
-                  <div style={{ fontSize: '0.85rem' }}>
-                    <Calendar size={14} /> ينتهي:{' '}
-                    {tenant.subscription?.endsAt
-                      ? new Date(tenant.subscription.endsAt).toLocaleDateString('ar-SY')
-                      : '---'}
-                  </div>
-                  <div style={{ marginTop: '1rem', display: 'flex', gap: '0.5rem' }}>
-                    <button
-                      className="btn-secondary"
-                      style={{ flex: 1, fontSize: '0.8rem' }}
-                      onClick={() => handleDownloadGuides(tenant)}
-                    >
-                      <FileText size={16} /> ملفات الإعداد والدليل
-                    </button>
-                    <button
-                      className="btn-ghost"
-                      style={{ border: '1px solid var(--border-soft)' }}
-                      title="تحميل ملف الإعداد JSON"
-                      onClick={() => handleDownloadSetupJson(tenant)}
-                    >
-                      <FileJson size={16} />
-                    </button>
-                    <button
-                      className="btn-ghost"
-                      style={{ border: '1px solid var(--border-soft)' }}
-                      title="تعديل المنتجات المفعّلة"
-                      onClick={() => openEditProducts(tenant)}
-                    >
-                      <Settings size={16} />
-                    </button>
-                    <button
-                      className="btn-ghost"
-                      style={{
-                        border: '1px solid rgba(220, 38, 38, 0.18)',
-                        color: '#dc2626',
-                      }}
-                      onClick={() => handleDeleteTenant(tenant)}
-                      disabled={busy}
-                      title="حذف العميل"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
+                  <KeyRound size={16} />
+                  {resettingPassword ? 'جاري إرسال الرابط...' : 'إرسال إعادة تعيين كلمة المرور'}
+                </button>
+
+                <div style={{ marginTop: '0.25rem', display: 'flex', gap: '0.5rem' }}>
+                  <button className="btn-secondary" style={{ flex: 1, fontSize: '0.8rem' }} onClick={() => handleDownloadGuides(tenant)}>
+                    <FileText size={16} /> ملفات الإعداد والدليل
+                  </button>
+                  <button className="btn-ghost" style={{ border: '1px solid var(--border-soft)' }} title="تحميل ملف الإعداد JSON" onClick={() => handleDownloadSetupJson(tenant)}><FileJson size={16} /></button>
+                  <button className="btn-ghost" style={{ border: '1px solid var(--border-soft)' }} title="تعديل الخدمات المفعّلة" onClick={() => openEditProducts(tenant)}><Settings size={16} /></button>
+                  <button className="btn-ghost" style={{ border: '1px solid rgba(220,38,38,.18)', color: '#dc2626' }} onClick={() => handleDeleteTenant(tenant)} disabled={busy} title="حذف العميل"><Trash2 size={16} /></button>
                 </div>
-              </motion.div>
-            );
-          })
-        )}
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
 
       <AnimatePresence>
-        {showAddModal ? (
-          <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(0,0,0,0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000,
-              backdropFilter: 'blur(4px)',
-            }}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="card"
-              style={{
-                width: 'min(1120px, calc(100vw - 48px))',
-                maxHeight: '92vh',
-                padding: 0,
-                overflow: 'hidden',
-              }}
-            >
-              <div style={{ padding: '1.5rem', background: '#064E3B', color: 'white' }}>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 700 }}>
-                  إعداد عميل جديد
-                </h2>
+        {showAddModal && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.52)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}>
+            <motion.div initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="card" style={{ width: 'min(1120px, calc(100vw - 32px))', maxHeight: '94vh', padding: 0, overflow: 'hidden' }}>
+              <div style={{ padding: '1.35rem 1.5rem', background: '#064E3B', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <h2 style={{ fontSize: '1.25rem', fontWeight: 800 }}>إعداد عميل جديد</h2>
+                  <p style={{ opacity: .78, fontSize: '0.8rem', marginTop: '0.2rem' }}>اختر بالـ Checkbox الخدمات التي تريد فتحها لهذا العميل.</p>
+                </div>
+                <button type="button" onClick={() => setShowAddModal(false)} style={{ background: 'transparent', border: 0, color: 'white', cursor: 'pointer' }}><X size={21} /></button>
               </div>
 
-              <form
-                onSubmit={handleQuickOnboarding}
-                style={{
-                  padding: '2rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '1.25rem',
-                  maxHeight: 'calc(92vh - 88px)',
-                  overflowY: 'auto',
-                }}
-              >
-                <div
-                  style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}
-                >
-                  <input
-                    placeholder="اسم العميل"
-                    value={form.name}
-                    onChange={(event) =>
-                      setForm({ ...form, name: event.target.value })
-                    }
-                    required
-                  />
-                  <input
-                    placeholder="Slug"
-                    value={form.slug}
-                    onChange={(event) =>
-                      setForm({ ...form, slug: event.target.value })
-                    }
-                    required
-                  />
+              <form onSubmit={handleQuickOnboarding} style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', maxHeight: 'calc(94vh - 82px)', overflowY: 'auto' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '1rem' }}>
+                  <input placeholder="اسم العميل" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+                  <input placeholder="Slug" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} required />
+                  <input placeholder="البريد الإلكتروني" value={form.contactEmail} onChange={(e) => setForm({ ...form, contactEmail: e.target.value })} required />
+                  <input placeholder="اسم مدير العميل" value={form.adminName} onChange={(e) => setForm({ ...form, adminName: e.target.value })} />
+                  <input placeholder="بريد دخول العميل" value={form.adminEmail} onChange={(e) => setForm({ ...form, adminEmail: e.target.value })} required />
                 </div>
 
-                <input
-                  placeholder="البريد الإلكتروني"
-                  value={form.contactEmail}
-                  onChange={(event) =>
-                    setForm({ ...form, contactEmail: event.target.value })
-                  }
-                  required
-                />
-
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '1rem',
-                  }}
-                >
-                  <input
-                    placeholder="اسم مدير العميل"
-                    value={form.adminName}
-                    onChange={(event) =>
-                      setForm({ ...form, adminName: event.target.value })
-                    }
-                  />
-                  <input
-                    placeholder="بريد دخول العميل"
-                    value={form.adminEmail}
-                    onChange={(event) =>
-                      setForm({ ...form, adminEmail: event.target.value })
-                    }
-                    required
-                  />
+                <div style={{ padding: '0.75rem 1rem', background: 'rgba(6,78,59,.06)', borderRadius: 10, border: '1px dashed #064E3B', fontSize: '0.84rem', color: '#064E3B' }}>
+                  📧 سيصل العميل إيميل ترحيب لتعيين كلمة المرور بنفسه.
                 </div>
 
-                <div style={{ padding: '0.75rem 1rem', background: 'rgba(6, 78, 59,0.06)', borderRadius: '10px', border: '1px dashed #064E3B', fontSize: '0.85rem', color: '#064E3B' }}>
-                  📧 سيصل العميل إيميل ترحيب لتعيين كلمة المرور بنفسه
-                </div>
+                <section style={{ padding: '1.2rem', background: 'var(--bg-main)', borderRadius: 14, border: '1px solid var(--border-soft)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1rem', fontWeight: 800 }}>الخدمات المفعلة للعميل</h3>
+                      <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>اختَر أي مجموعة من الخدمات. يمكن تعديلها لاحقاً من زر الإعدادات في بطاقة العميل.</p>
+                    </div>
+                    <span className="badge badge-success">{form.enabledProducts.length} محددة</span>
+                  </div>
 
-                <div
-                  style={{
-                    padding: '1.25rem',
-                    background: 'var(--bg-main)',
-                    borderRadius: '12px',
-                    border: '1px dashed #064E3B',
-                  }}
-                >
-                  <label
-                    style={{
-                      fontSize: '0.85rem',
-                      fontWeight: 700,
-                      marginBottom: '0.5rem',
-                      display: 'block',
-                    }}
-                  >
-                    اختر الخدمة المطلوبة
-                  </label>
-
-                  <div
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: otpSelected
-                        ? '1.05fr 1.35fr'
-                        : '1fr',
-                      gap: '1rem',
-                      alignItems: 'start',
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: 'grid',
-                        gap: '1rem',
-                      }}
-                    >
-                      <div className="input-group">
-                        <label
-                          style={{
-                            display: 'block',
-                            fontSize: '0.8rem',
-                            color: 'var(--text-muted)',
-                            marginBottom: '0.25rem',
-                          }}
-                        >
-                          الباقة الجاهزة
-                        </label>
-                        <select
-                          value={form.selectedPlanId}
-                          onChange={(event) => {
-                            const selectedPlan = PRESET_PLANS.find(
-                              (item) => item.id === event.target.value,
-                            );
-                            if (!selectedPlan) return;
-
-                            setForm({
-                              ...form,
-                              selectedPlanId: selectedPlan.id,
-                              planName: selectedPlan.name,
-                              price: String(selectedPlan.price),
-                              durationMonths: String(selectedPlan.duration),
-                              maxMonthlyOtp: String(selectedPlan.quota),
-                              enabledProducts: selectedPlan.products,
-                              providerType:
-                                selectedPlan.products.includes('otp')
-                                  ? 'whatsapp_web'
-                                  : form.providerType,
-                            });
-                          }}
-                        >
-                          {PRESET_PLANS.map((plan) => (
-                            <option key={plan.id} value={plan.id}>
-                              {plan.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div
-                        style={{
-                          display: 'grid',
-                          gridTemplateColumns: 'minmax(0, 1.45fr) minmax(0, 0.85fr)',
-                          gap: '1rem',
-                        }}
-                      >
-                        <input
-                          placeholder="اسم الباقة"
-                          value={form.planName}
-                          onChange={(event) =>
-                            setForm({
-                              ...form,
-                              selectedPlanId: 'custom',
-                              planName: event.target.value,
-                            })
-                          }
-                        />
-                        <input
-                          placeholder="السعر"
-                          value={form.price}
-                          onChange={(event) =>
-                            setForm({
-                              ...form,
-                              selectedPlanId: 'custom',
-                              price: event.target.value,
-                            })
-                          }
-                        />
-                      </div>
-
-                      <div
-                        style={{
-                          display: 'grid',
-                          gridTemplateColumns: otpSelected
-                            ? 'repeat(3, minmax(0, 1fr))'
-                            : 'repeat(2, minmax(0, 1fr))',
-                          gap: '1rem',
-                        }}
-                      >
-                        <div className="input-group">
-                          <label
-                            style={{
-                              display: 'block',
-                              fontSize: '0.8rem',
-                              color: 'var(--text-muted)',
-                              marginBottom: '0.25rem',
-                            }}
-                          >
-                            مدة الاشتراك
-                          </label>
-                          <select
-                            value={form.durationMonths}
-                            onChange={(event) =>
-                              setForm({ ...form, durationMonths: event.target.value })
-                            }
-                          >
-                            <option value="1">شهر واحد</option>
-                            <option value="6">6 أشهر</option>
-                            <option value="12">سنة واحدة</option>
-                            <option value="24">سنتين</option>
-                            <option value="60">5 سنوات</option>
-                          </select>
-                        </div>
-
-                        {otpSelected ? (
-                          <div className="input-group">
-                            <label
-                              style={{
-                                display: 'block',
-                                fontSize: '0.8rem',
-                                color: 'var(--text-muted)',
-                                marginBottom: '0.25rem',
-                              }}
-                            >
-                              الحصة الشهرية
-                            </label>
-                            <input
-                              placeholder="الحصة الشهرية"
-                              value={form.maxMonthlyOtp}
-                              onChange={(event) =>
-                                setForm({
-                                  ...form,
-                                  selectedPlanId: 'custom',
-                                  maxMonthlyOtp: event.target.value,
-                                })
-                              }
-                            />
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.8rem' }}>
+                    {PRODUCT_OPTIONS.map((option) => {
+                      const selected = form.enabledProducts.includes(option.value);
+                      return (
+                        <label key={option.value} style={productCardStyle(selected)}>
+                          <input type="checkbox" checked={selected} onChange={() => toggleFormProduct(option.value)} style={{ marginTop: '0.2rem', width: 18, height: 18, accentColor: 'var(--brand-primary)' }} />
+                          <div style={{ color: selected ? 'var(--brand-primary)' : 'var(--text-muted)', marginTop: '0.05rem' }}>{option.icon}</div>
+                          <div>
+                            <div style={{ fontWeight: 800, fontSize: '0.9rem' }}>{option.label}</div>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', lineHeight: 1.65, marginTop: '0.15rem' }}>{option.description}</div>
                           </div>
-                        ) : null}
+                        </label>
+                      );
+                    })}
+                  </div>
+                </section>
 
-                        <div className="input-group">
-                          <label
-                            style={{
-                              display: 'block',
-                              fontSize: '0.8rem',
-                              color: 'var(--text-muted)',
-                              marginBottom: '0.25rem',
-                            }}
-                          >
-                            مزود الخدمة
-                          </label>
-                          <select
-                            value={form.providerType}
-                            onChange={(event) =>
-                              setForm({
-                                ...form,
-                                providerType: event.target.value as ProviderType,
-                              })
-                            }
-                          >
-                            <option value="whatsapp_web">واتساب مباشر عبر QR</option>
-                            <option value="twilio">Twilio SMS</option>
-                            <option value="mock">وضع تجريبي</option>
-                          </select>
+                <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) repeat(3, minmax(0, .7fr))', gap: '1rem' }}>
+                  <div className="input-group">
+                    <label style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>اسم الباقة / الاتفاق</label>
+                    <input value={form.planName} onChange={(e) => setForm({ ...form, planName: e.target.value })} placeholder="مثلاً: باقة العيادة" />
+                  </div>
+                  <div className="input-group">
+                    <label style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>السعر ($)</label>
+                    <input type="number" min="0" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} />
+                  </div>
+                  <div className="input-group">
+                    <label style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>مدة الاشتراك</label>
+                    <select value={form.durationMonths} onChange={(e) => setForm({ ...form, durationMonths: e.target.value })}>
+                      <option value="1">شهر</option><option value="6">6 أشهر</option><option value="12">سنة</option><option value="24">سنتين</option><option value="60">5 سنوات</option>
+                    </select>
+                  </div>
+                  <div className="input-group">
+                    <label style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>مزود واتساب</label>
+                    <select value={form.providerType} onChange={(e) => setForm({ ...form, providerType: e.target.value as ProviderType })}>
+                      <option value="whatsapp_web">واتساب مباشر عبر QR</option>
+                      <option value="twilio">Twilio</option>
+                      <option value="mock">تجريبي</option>
+                    </select>
+                  </div>
+                </div>
+
+                {otpSelected && (
+                  <section className="card" style={{ padding: '1rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: '1rem', alignItems: 'start' }}>
+                      <div className="input-group">
+                        <label style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>حصة OTP الشهرية</label>
+                        <input type="number" min="0" value={form.maxMonthlyOtp} onChange={(e) => setForm({ ...form, maxMonthlyOtp: e.target.value })} />
+                      </div>
+                      <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', lineHeight: 1.8 }}>
+                        قوالب OTP تستخدم <span className="ltr">{'{{code}}'}</span> لإظهار رمز التحقق و <span className="ltr">{'{{expiresInMinutes}}'}</span> لمدة الصلاحية.
+                      </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '0.8rem', marginTop: '1rem' }}>
+                      {(Object.entries(OTP_TEMPLATE_LABELS) as [OtpTemplateKey, string][]).map(([key, label]) => (
+                        <div key={key} className="input-group" style={{ padding: '0.9rem', borderRadius: 12, background: 'var(--bg-main)', border: '1px solid var(--border-soft)' }}>
+                          <label style={{ display: 'block', fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.4rem' }}>{label}</label>
+                          <textarea
+                            value={form.otpTemplates[key]}
+                            rows={5}
+                            onChange={(e) => setForm({ ...form, otpTemplates: { ...form.otpTemplates, [key]: e.target.value } })}
+                            style={{ width: '100%', resize: 'vertical', minHeight: 130 }}
+                          />
                         </div>
-                      </div>
+                      ))}
                     </div>
-
-                    {otpSelected ? (
-                      <div
-                        style={{
-                          display: 'grid',
-                          gap: '1rem',
-                        }}
-                      >
-                      <div
-                        style={{
-                          fontSize: '0.85rem',
-                          color: 'var(--text-muted)',
-                          lineHeight: 1.8,
-                        }}
-                      >
-                        هذه الرسائل تُثبت من طرفك عند تجهيز العميل. وجود{' '}
-                        <span className="ltr">{'{{code}}'}</span> داخل كل رسالة إلزامي لأنه
-                        المكان الذي سيظهر فيه رمز التحقق الفعلي.
-                      </div>
-
-                      <div
-                        style={{
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-                          gap: '1rem',
-                        }}
-                      >
-                        {(Object.entries(OTP_TEMPLATE_LABELS) as [OtpTemplateKey, string][]).map(
-                          ([key, label]) => (
-                            <div
-                              key={key}
-                              className="input-group"
-                              style={{
-                                padding: '1rem',
-                                borderRadius: '12px',
-                                background: 'white',
-                                border: '1px solid var(--border-soft)',
-                              }}
-                            >
-                              <label
-                                style={{
-                                  display: 'block',
-                                  fontSize: '0.8rem',
-                                  color: 'var(--text-muted)',
-                                  marginBottom: '0.5rem',
-                                }}
-                              >
-                                {label}
-                              </label>
-                              <textarea
-                                value={form.otpTemplates[key]}
-                                rows={5}
-                                onChange={(event) =>
-                                  setForm({
-                                    ...form,
-                                    otpTemplates: {
-                                      ...form.otpTemplates,
-                                      [key]: event.target.value,
-                                    },
-                                  })
-                                }
-                                placeholder={DEFAULT_OTP_TEMPLATES[key]}
-                                style={{
-                                  width: '100%',
-                                  resize: 'vertical',
-                                  minHeight: '150px',
-                                }}
-                              />
-                            </div>
-                          ),
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    <div
-                      style={{
-                        display: 'grid',
-                        placeItems: 'center',
-                        minHeight: '100%',
-                        padding: '2rem 1rem',
-                        color: 'var(--text-muted)',
-                        background: 'white',
-                        borderRadius: '12px',
-                        border: '1px solid var(--border-soft)',
-                        textAlign: 'center',
-                        lineHeight: 1.9,
-                      }}
-                    >
-                      هذه الخدمة لا تحتاج قوالب OTP ثابتة، لذلك سيبقى هذا الجزء
-                      فارغاً.
-                    </div>
-                  )}
-                </div>
-                </div>
+                  </section>
+                )}
 
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                  <button
-                    type="submit"
-                    className="btn-primary"
-                    style={{ flex: 1 }}
-                    disabled={busy}
-                  >
-                    {busy ? 'جاري التفعيل...' : 'تفعيل الخدمة للعميل'}
+                  <button type="submit" className="btn-primary" style={{ flex: 1 }} disabled={busy || !form.enabledProducts.length}>
+                    {busy ? 'جاري إنشاء العميل...' : `إنشاء العميل وتفعيل ${form.enabledProducts.length} خدمة`}
                   </button>
-                  <button
-                    type="button"
-                    className="btn-ghost"
-                    onClick={() => setShowAddModal(false)}
-                  >
-                    إلغاء
-                  </button>
+                  <button type="button" className="btn-ghost" onClick={() => setShowAddModal(false)}>إلغاء</button>
                 </div>
               </form>
             </motion.div>
           </div>
-        ) : null}
+        )}
       </AnimatePresence>
 
       <AnimatePresence>
-        {editingProductsTenant ? (
-          <div
-            style={{
-              position: 'fixed',
-              inset: 0,
-              background: 'rgba(0,0,0,0.5)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              zIndex: 1000,
-              backdropFilter: 'blur(4px)',
-            }}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="card"
-              style={{ width: 'min(420px, calc(100vw - 48px))', padding: '1.5rem' }}
-            >
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.25rem' }}>
-                تعديل منتجات {editingProductsTenant.name}
-              </h3>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
-                فعّل أو ألغِ أي خدمة لهذا العميل بدون التأثير على باقي إعداداته.
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                {(
-                  [
-                    { value: 'otp' as TenantProduct, label: 'خدمة واتساب OTP' },
-                    { value: 'support' as TenantProduct, label: 'صندوق الدعم المشترك' },
-                    { value: 'hr' as TenantProduct, label: 'منصة التوظيف' },
-                    { value: 'doctor_relay' as TenantProduct, label: 'توجيه الخصوصية (طبيب/عميل)' },
-                  ]
-                ).map((option) => (
-                  <label
-                    key={option.value}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.6rem',
-                      padding: '0.6rem 0.8rem',
-                      borderRadius: 'var(--radius-md)',
-                      border: '1px solid var(--border-soft)',
-                      cursor: 'pointer',
-                      fontSize: '0.85rem',
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={editingProductsSelection.includes(option.value)}
-                      onChange={() => toggleEditingProduct(option.value)}
-                    />
-                    {option.label}
-                  </label>
-                ))}
+        {editingProductsTenant && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.52)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, backdropFilter: 'blur(4px)' }}>
+            <motion.div initial={{ scale: 0.96, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="card" style={{ width: 'min(520px, calc(100vw - 32px))', padding: '1.5rem' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.25rem' }}>خدمات {editingProductsTenant.name}</h3>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>علّم على الخدمات التي تريد إظهارها وتفعيلها لهذا العميل.</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1.5rem' }}>
+                {PRODUCT_OPTIONS.map((option) => {
+                  const selected = editingProductsSelection.includes(option.value);
+                  return (
+                    <label key={option.value} style={productCardStyle(selected)}>
+                      <input type="checkbox" checked={selected} onChange={() => toggleEditingProduct(option.value)} style={{ marginTop: '0.2rem', width: 18, height: 18, accentColor: 'var(--brand-primary)' }} />
+                      <div style={{ color: selected ? 'var(--brand-primary)' : 'var(--text-muted)' }}>{option.icon}</div>
+                      <div>
+                        <div style={{ fontWeight: 800, fontSize: '0.88rem' }}>{option.label}</div>
+                        <div style={{ color: 'var(--text-muted)', fontSize: '0.74rem', marginTop: '0.15rem' }}>{option.description}</div>
+                      </div>
+                    </label>
+                  );
+                })}
               </div>
               <div style={{ display: 'flex', gap: '1rem' }}>
-                <button className="btn-primary" style={{ flex: 1 }} disabled={savingProducts} onClick={saveEditingProducts}>
-                  {savingProducts ? 'جاري الحفظ...' : 'حفظ'}
+                <button className="btn-primary" style={{ flex: 1 }} disabled={savingProducts || !editingProductsSelection.length} onClick={saveEditingProducts}>
+                  {savingProducts ? 'جاري الحفظ...' : `حفظ (${editingProductsSelection.length})`}
                 </button>
-                <button className="btn-ghost" type="button" onClick={() => setEditingProductsTenant(null)}>
-                  إلغاء
-                </button>
+                <button className="btn-ghost" type="button" onClick={() => setEditingProductsTenant(null)}>إلغاء</button>
               </div>
             </motion.div>
           </div>
-        ) : null}
+        )}
       </AnimatePresence>
     </motion.div>
   );

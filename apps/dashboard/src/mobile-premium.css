@@ -1,0 +1,463 @@
+/* ═══════════════════════════════════════════════════════════════
+   VAYRO — Premium responsive application layer
+   Applies after page-specific CSS so old desktop inline layouts become
+   predictable phone screens without changing business logic.
+   ═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  :root {
+    --mobile-page-x: 12px;
+    --mobile-card-radius: 20px;
+    --mobile-control-h: 46px;
+  }
+
+  html, body, #root { min-height: 100%; }
+  body { background: var(--bg-main); }
+
+  /* ── Universal routed page rhythm ─────────────────────────── */
+  body:not(.chat-open) .page-stack {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 12px var(--mobile-page-x) 18px !important;
+    gap: 12px !important;
+  }
+
+  .page-stack > header {
+    width: 100%;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    align-items: start !important;
+    gap: 10px !important;
+    margin: 0 !important;
+    padding: 6px 2px 8px !important;
+  }
+
+  /* A branded dashboard hero keeps its colour, but becomes phone-sized. */
+  .page-stack > header[style*="background"] {
+    padding: 18px !important;
+    border-radius: 22px !important;
+    gap: 14px !important;
+  }
+
+  .page-stack > header h1 {
+    font-size: clamp(1.35rem, 7vw, 1.65rem) !important;
+    line-height: 1.28 !important;
+    letter-spacing: -0.025em;
+  }
+
+  .page-stack > header p {
+    font-size: .8rem !important;
+    line-height: 1.7 !important;
+  }
+
+  .page-stack > header > div:last-child:not(:first-child),
+  .page-stack > header > button,
+  .page-stack > header > a {
+    min-width: 0;
+  }
+
+  .page-stack > header > div:last-child:not(:first-child) {
+    width: 100%;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    align-items: stretch !important;
+  }
+
+  .page-stack > header .btn-primary,
+  .page-stack > header .btn-secondary,
+  .page-stack > header > .btn-primary,
+  .page-stack > header > .btn-secondary {
+    flex: 1 1 150px;
+    min-width: 0;
+    justify-content: center;
+  }
+
+  .page-stack > header [style*="width: 260px"],
+  .page-stack > header [style*="width: 300px"],
+  .page-stack > header [style*="width: 360px"] {
+    width: 100% !important;
+  }
+
+  /* ── Cards: one visual language on every screen ───────────── */
+  .page-stack .card,
+  .page-stack .stat-card {
+    border-radius: var(--mobile-card-radius) !important;
+    padding: 15px !important;
+    box-shadow: 0 5px 22px rgba(6, 40, 30, .055) !important;
+  }
+
+  [data-theme='dark'] .page-stack .card,
+  [data-theme='dark'] .page-stack .stat-card {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .24) !important;
+  }
+
+  /* Desktop grids become deliberate single-column screens. This is intentionally
+     stronger than the legacy auto-fit rule: 150px columns looked cramped at 390px. */
+  .page-stack [style*="grid-template-columns"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .page-stack [style*="gap: 2rem"] { gap: 12px !important; }
+  .page-stack [style*="gap: 1.5rem"] { gap: 12px !important; }
+  .page-stack [style*="gap: 1.25rem"] { gap: 10px !important; }
+
+  /* Search/filter toolbars authored as desktop rows. */
+  .page-stack > .card[style*="display: flex"]:has(input),
+  .page-stack > .card[style*="display: flex"]:has(select) {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 9px !important;
+  }
+
+  .page-stack > .card[style*="display: flex"]:has(input) > *,
+  .page-stack > .card[style*="display: flex"]:has(select) > * {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .page-stack > .card[style*="display: flex"]:has(input) button,
+  .page-stack > .card[style*="display: flex"]:has(select) button {
+    justify-content: center;
+  }
+
+  /* Important card headers can wrap instead of squeezing title + actions. */
+  .page-stack > .card > [style*="justify-content: space-between"],
+  .page-stack > section.card > [style*="justify-content: space-between"],
+  .page-stack > article.card > [style*="justify-content: space-between"] {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  /* ── Controls ─────────────────────────────────────────────── */
+  .page-stack input:not([type='checkbox']):not([type='radio']),
+  .page-stack select,
+  .page-stack textarea {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    font-size: 16px !important; /* prevents iOS zoom */
+    border-radius: 13px !important;
+  }
+
+  .page-stack input:not([type='checkbox']):not([type='radio']),
+  .page-stack select {
+    min-height: var(--mobile-control-h) !important;
+  }
+
+  .page-stack textarea {
+    min-height: 92px;
+  }
+
+  .page-stack .input-group { min-width: 0; }
+
+  .page-stack .btn-primary,
+  .page-stack .btn-secondary,
+  .page-stack .btn-danger {
+    min-height: 44px;
+    border-radius: 13px;
+  }
+
+  /* Action rows stay balanced and thumb friendly. */
+  .page-stack form > div:has(> .btn-primary):has(> .btn-ghost),
+  .page-stack form > div:has(> .btn-primary):has(> .btn-secondary) {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .page-stack form > div:has(> .btn-primary):has(> .btn-ghost) > button,
+  .page-stack form > div:has(> .btn-primary):has(> .btn-secondary) > button {
+    width: 100% !important;
+    min-width: 0 !important;
+    justify-content: center;
+  }
+
+  /* ── Tables ──────────────────────────────────────────────── */
+  .page-stack .card:has(> table),
+  .page-stack article.card:has(table) {
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .page-stack table {
+    display: table !important;
+    min-width: 680px;
+    width: 100% !important;
+    white-space: nowrap;
+    font-size: .78rem;
+  }
+
+  .page-stack .card:has(table) > div[style*="overflow-x"],
+  .page-stack article.card:has(table) > div[style*="overflow-x"] {
+    overflow-x: auto !important;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+
+  .page-stack table th,
+  .page-stack table td {
+    padding: .78rem .8rem !important;
+  }
+
+  .page-stack table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: var(--bg-main);
+  }
+
+  /* ── Modals become native bottom sheets ─────────────────── */
+  .page-stack [style*="position: fixed"][style*="inset: 0"]:has(> .card) {
+    align-items: flex-end !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+
+  .page-stack [style*="position: fixed"][style*="inset: 0"] > .card {
+    width: 100% !important;
+    max-width: none !important;
+    max-height: 92dvh !important;
+    margin: 0 !important;
+    border-radius: 26px 26px 0 0 !important;
+    overflow: auto !important;
+    overscroll-behavior: contain;
+    box-shadow: 0 -18px 60px rgba(4, 24, 18, .25) !important;
+  }
+
+  .page-stack [style*="position: fixed"][style*="inset: 0"] > .card > div:first-child[style*="background"] {
+    position: sticky;
+    top: 0;
+    z-index: 4;
+    padding: 16px !important;
+  }
+
+  .page-stack [style*="position: fixed"][style*="inset: 0"] > .card > form,
+  .page-stack [style*="position: fixed"][style*="inset: 0"] > .card > div:not(:first-child) {
+    padding: 16px !important;
+  }
+
+  /* ── Charts & media ─────────────────────────────────────── */
+  .page-stack .recharts-responsive-container {
+    min-height: 220px;
+  }
+
+  .page-stack [style*="height: 300px"]:has(.recharts-responsive-container) {
+    height: 235px !important;
+  }
+
+  .page-stack img[alt='QR'],
+  .page-stack img[alt='OTP QR'] {
+    width: min(220px, 68vw) !important;
+    height: auto !important;
+    aspect-ratio: 1;
+  }
+
+  /* QR / connection hero cards should not waste half a phone screen in padding. */
+  body[data-vayro-route='support-connection'] .page-stack article.card[style*="align-items: center"],
+  body[data-vayro-route='otp-workspace'] .page-stack article.card {
+    padding: 18px !important;
+  }
+
+  /* Landing editor: sections read like native settings groups. */
+  body[data-vayro-route='landing-editor'] #landing-editor-form {
+    gap: 10px !important;
+  }
+
+  body[data-vayro-route='landing-editor'] #landing-editor-form > section.card {
+    padding: 16px !important;
+  }
+
+  body[data-vayro-route='landing-editor'] #landing-editor-form > section.card > div:first-child h3 {
+    font-size: 1rem !important;
+  }
+
+  body[data-vayro-route='landing-editor'] #landing-editor-form > section.card > div:first-child p {
+    font-size: .78rem !important;
+  }
+
+  /* Dashboard KPI values must not collide with their icons. */
+  body[data-vayro-route='dashboard'] .page-stack > section:first-of-type .card {
+    min-height: 118px;
+  }
+
+  body[data-vayro-route='dashboard'] .page-stack > section:first-of-type .card h3 {
+    font-size: 1.45rem !important;
+  }
+
+  /* Tenant cards: action icons remain a compact toolbar, never 4 huge rows. */
+  body[data-vayro-route='tenants'] .page-stack .card [style*="margin-top: 0.25rem"][style*="display: flex"] {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 44px 44px 44px !important;
+    gap: 7px !important;
+  }
+
+  body[data-vayro-route='tenants'] .page-stack .card [style*="margin-top: 0.25rem"][style*="display: flex"] > button {
+    min-width: 0;
+  }
+
+  /* ── Dark-mode safety for legacy hardcoded light cards ─── */
+  [data-theme='dark'] .page-stack [style*="background: white"],
+  [data-theme='dark'] .page-stack [style*="background: #fff"] {
+    background: var(--bg-card) !important;
+  }
+
+  [data-theme='dark'] .page-stack [style*="border: 1px solid #ddd"] {
+    border-color: var(--border-soft) !important;
+  }
+
+  /* ═════════ HR Inbox: three desktop panes → native screens ═════════ */
+  body[data-vayro-route='hr-inbox'] .content-area {
+    overflow: hidden !important;
+  }
+
+  .hr-mobile-shell {
+    position: relative !important;
+    display: block !important;
+    width: 100% !important;
+    height: calc(100dvh - var(--m-top) - var(--m-bottom)) !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    background: var(--bg-main) !important;
+  }
+
+  .hr-mobile-candidates,
+  .hr-mobile-thread,
+  .hr-mobile-profile {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    border: 0 !important;
+    background: var(--bg-card) !important;
+  }
+
+  body[data-hr-mobile-view='list'] .hr-mobile-candidates { display: flex !important; }
+  body[data-hr-mobile-view='list'] .hr-mobile-thread,
+  body[data-hr-mobile-view='list'] .hr-mobile-profile { display: none !important; }
+
+  body[data-hr-mobile-view='thread'] .hr-mobile-candidates,
+  body[data-hr-mobile-view='thread'] .hr-mobile-profile { display: none !important; }
+  body[data-hr-mobile-view='thread'] .hr-mobile-thread { display: flex !important; }
+
+  body[data-hr-mobile-view='profile'] .hr-mobile-candidates,
+  body[data-hr-mobile-view='profile'] .hr-mobile-thread { display: none !important; }
+  body[data-hr-mobile-view='profile'] .hr-mobile-profile { display: flex !important; }
+
+  body.hr-inbox-open .mobile-tabbar { display: none !important; }
+  body.hr-inbox-open .content-area { padding-bottom: 0 !important; }
+  body.hr-inbox-open .hr-mobile-shell {
+    height: calc(100dvh - var(--m-top)) !important;
+  }
+
+  .hr-mobile-candidates > div:first-child {
+    padding: 12px !important;
+    background: var(--bg-card);
+    position: sticky;
+    top: 0;
+    z-index: 3;
+  }
+
+  .hr-mobile-candidates > div:first-child > div:last-child {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .hr-mobile-candidates > div:first-child > div:last-child::-webkit-scrollbar { display: none; }
+  .hr-mobile-candidates > div:first-child > div:last-child button { flex: 0 0 auto; min-height: 34px; padding-inline: 12px !important; }
+
+  .hr-mobile-candidates > div:last-child > div[style*="cursor: pointer"] {
+    min-height: 72px;
+    padding: 11px 13px !important;
+  }
+
+  .hr-mobile-thread > div:first-child {
+    min-height: 64px;
+    padding: 10px 12px !important;
+  }
+
+  .hr-mobile-thread > div:first-child > div:first-child {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .hr-mobile-thread > div:first-child h3,
+  .hr-mobile-thread > div:first-child p {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .hr-mobile-thread > div:nth-child(2) {
+    padding: 14px 12px !important;
+    gap: 12px !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .hr-mobile-thread > div:last-child {
+    padding: 9px 10px calc(9px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .hr-mobile-thread > div:last-child form { gap: 7px !important; }
+  .hr-mobile-thread > div:last-child textarea { font-size: 16px !important; min-height: 48px !important; }
+
+  .hr-mobile-profile {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .hr-mobile-profile > div { height: auto !important; min-height: 100%; }
+  .hr-mobile-profile > div > div { padding: 18px !important; }
+
+  .hr-mobile-profile-btn { color: var(--brand-primary); }
+
+  /* ── Public/auth screens ─────────────────────────────────── */
+  .auth-page { min-height: 100dvh; }
+  .auth-panel { padding: max(18px, env(safe-area-inset-top)) 14px max(18px, env(safe-area-inset-bottom)); }
+  .auth-card { border-radius: 22px; padding: 22px 18px; }
+
+  .vayro-login-page { min-height: 100dvh !important; }
+  .vayro-login-form-side {
+    padding-top: max(24px, env(safe-area-inset-top)) !important;
+    padding-bottom: max(24px, env(safe-area-inset-bottom)) !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .page-stack > header .btn-primary,
+  .page-stack > header .btn-secondary {
+    flex-basis: 100%;
+  }
+
+  .page-stack form > div:has(> .btn-primary):has(> .btn-ghost),
+  .page-stack form > div:has(> .btn-primary):has(> .btn-secondary) {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .page-stack [style*="position: fixed"][style*="inset: 0"] > .card {
+    border-radius: 24px 24px 0 0 !important;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1120px) {
+  /* Tablets and small laptops get a restrained two-column layout instead of desktop overflow. */
+  .page-stack {
+    padding: 1.35rem 1.5rem !important;
+    gap: 1.2rem !important;
+  }
+
+  .page-stack [style*="grid-template-columns: 1.2fr 0.8fr"],
+  .page-stack [style*="grid-template-columns: 1.15fr 0.85fr"],
+  .page-stack [style*="grid-template-columns: 1.05fr 1.4fr 1.1fr"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .page-stack > header { flex-wrap: wrap; gap: 1rem; }
+}
