@@ -1,0 +1,23 @@
+/* Public launch guard: HR remains inside the product, but is not advertised until launch-ready. */
+.product-tabs > span:nth-child(3),
+.dashboard-grid .panel-hr,
+.demo-product-tabs > button:nth-child(4),
+.mlive-flows > button:nth-child(4) {
+  display: none !important;
+}
+
+.demo-product-tabs {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+.mlive-flows {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+
+@media (min-width: 761px) {
+  .services-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    max-width: 980px;
+    margin-inline: auto;
+  }
+}
