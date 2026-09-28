@@ -2,18 +2,76 @@
 <html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta
       name="description"
-      content="VAYRO منصة واتساب للأعمال: OTP عبر واتساب، صندوق دعم مشترك، وتوظيف HR من لوحة واحدة."
+      content="VAYRO منصة واتساب للأعمال: OTP عبر واتساب وصندوق دعم مشترك لإدارة محادثات العملاء من مكان واحد."
     />
-    <meta name="theme-color" content="#064E3B" />
+    <meta name="theme-color" content="#F5F8F6" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <title>VAYRO | تواصل أذكى لأعمال أكبر</title>
+    <script>
+      (() => {
+        try {
+          const saved = localStorage.getItem('vayro-theme');
+          const theme = saved === 'dark' || saved === 'light'
+            ? saved
+            : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          document.documentElement.dataset.theme = theme;
+          document.documentElement.style.background = theme === 'dark' ? '#04130f' : '#f5f8f6';
+        } catch (_) {}
+      })();
+    </script>
+    <style>
+      html, body { margin: 0; min-height: 100%; }
+      body { background: #f5f8f6; }
+      html[data-theme='dark'] body { background: #04130f; }
+      html:not(.vayro-ready) #root { opacity: 0; }
+      #root { transition: opacity .18s ease; }
+      #vayro-boot {
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        display: grid;
+        place-items: center;
+        background: #f5f8f6;
+        color: #075e49;
+        font-family: Arial, sans-serif;
+        transition: opacity .18s ease;
+      }
+      html[data-theme='dark'] #vayro-boot { background: #04130f; color: #f5fff9; }
+      .vayro-boot-mark { display: grid; justify-items: center; gap: 13px; }
+      .vayro-boot-logo { font-size: 28px; line-height: 1; font-weight: 800; letter-spacing: .04em; }
+      .vayro-boot-line {
+        width: 72px;
+        height: 3px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: rgba(7,94,73,.12);
+      }
+      html[data-theme='dark'] .vayro-boot-line { background: rgba(255,255,255,.09); }
+      .vayro-boot-line::after {
+        content: '';
+        display: block;
+        width: 32px;
+        height: 100%;
+        border-radius: inherit;
+        background: #22c58b;
+        animation: vayroBoot 1s ease-in-out infinite alternate;
+      }
+      @keyframes vayroBoot { from { transform: translateX(-4px); } to { transform: translateX(44px); } }
+      @media (prefers-reduced-motion: reduce) { .vayro-boot-line::after { animation: none; width: 100%; } }
+    </style>
   </head>
   <body>
     <noscript>VAYRO requires JavaScript to load the interactive landing page.</noscript>
+    <div id="vayro-boot" aria-label="Loading VAYRO">
+      <div class="vayro-boot-mark">
+        <div class="vayro-boot-logo">VAYRO</div>
+        <div class="vayro-boot-line"></div>
+      </div>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
