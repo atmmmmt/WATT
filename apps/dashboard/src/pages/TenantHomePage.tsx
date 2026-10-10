@@ -178,12 +178,54 @@ export function TenantHomePage() {
 
   useEffect(() => { load(); }, [load]);
 
+  // /tenants intentionally omits qrDataUrl. Poll the authorized session endpoint
+  // so the real QR appears as soon as whatsapp-web.js has generated it.
+  const liveTenantId = tenant?.id || tenant?._id;
+  const liveSessionStatus = tenant?.whatsappSession?.status;
+  useEffect(() => {
+    if (!token || !liveTenantId) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const sessionInProgress = ['initializing', 'qr_ready', 'authenticated'].includes(liveSessionStatus || '');
+    const refreshInterval = sessionInProgress ? 1500 : 12000;
+
+    async function pollSession() {
+      try {
+        const session = await apiRequest<TenantInfo['whatsappSession']>(
+          `/whatsapp-sessions/${liveTenantId}`, {}, token!,
+        );
+        if (!cancelled) {
+          setTenant(current =>
+            current && (current.id || current._id) === liveTenantId
+              ? { ...current, whatsappSession: session }
+              : current,
+          );
+        }
+      } catch (error) {
+        // A temporary network failure must not stop QR polling.
+        console.warn('[VAYRO] WhatsApp session refresh failed', error);
+      } finally {
+        if (!cancelled) timer = setTimeout(pollSession, refreshInterval);
+      }
+    }
+
+    timer = setTimeout(pollSession, 250);
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [token, liveTenantId, liveSessionStatus]);
+
   function toast(msg: string, type: 'ok'|'err' = 'ok') {
     setNotice(msg); setNoticeType(type);
     setTimeout(() => setNotice(''), 4000);
   }
 
   async function startQr() {
+    if (tenant?.whatsappSession?.status === 'ready') {
+      toast('واتساب متصل بالفعل، لا تحتاج إلى QR جديد');
+      return;
+    }
     setBusy('start');
     try {
       const s = await apiRequest<any>('/whatsapp-sessions/start', { method: 'POST' }, token!);
@@ -438,7 +480,7 @@ export function TenantHomePage() {
                 ? <img src={sess.qrDataUrl} alt="QR" style={{ width:140, height:140, objectFit:'contain' }}/>
                 : <div style={{ textAlign:'center', color:'var(--text-muted)' }}>
                     <QrCode size={40} style={{ marginBottom:'0.4rem' }}/>
-                    <p style={{ fontSize:'0.75rem' }}>اضغط "بدء جلسة"</p>
+                    <p style={{ fontSize:'0.75rem' }}>{sess?.status === 'initializing' || sess?.status === 'authenticated' ? 'جاري التجهيز، سيظهر QR تلقائياً فور توليده' : sess?.status === 'ready' ? 'واتساب متصل وجاهز للإرسال' : 'اضغط "بدء جلسة"'}</p>
                   </div>
               }
             </div>
