@@ -173,6 +173,10 @@ export class BaileysWhatsappSessionsService implements OnModuleInit, OnModuleDes
       this.reconnectTimers.delete(tenantId);
     }
     if (this.sockets.has(tenantId)) return this.getSession(tenantId);
+    // Also guard manual "start" calls racing the 515 close handler.
+    // The next socket must read the credentials saved by the previous socket.
+    await this.waitForCredentialWrites(tenantId);
+    if (this.sockets.has(tenantId)) return this.getSession(tenantId);
 
     let starting = this.starts.get(tenantId);
     if (!starting) {
