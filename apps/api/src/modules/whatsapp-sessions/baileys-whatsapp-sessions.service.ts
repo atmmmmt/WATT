@@ -48,6 +48,9 @@ export class BaileysWhatsappSessionsService implements OnModuleInit, OnModuleDes
   private readonly starts = new Map<string, Promise<void>>();
   private readonly reconnectTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private readonly reconnectAttempts = new Map<string, number>();
+  // Serialize credential persistence per tenant. A 515 restart must not read
+  // stale credentials while an earlier creds.update write is still in flight.
+  private readonly credentialWrites = new Map<string, Promise<void>>();
   private readonly manualStops = new Set<string>();
   private readonly jidPhoneMap = new Map<string, Map<string, string>>();
   private readonly messageCache = new Map<string, Map<string, any>>();
@@ -170,6 +173,10 @@ export class BaileysWhatsappSessionsService implements OnModuleInit, OnModuleDes
       this.reconnectTimers.delete(tenantId);
     }
     if (this.sockets.has(tenantId)) return this.getSession(tenantId);
+    // Also guard manual "start" calls racing the 515 close handler.
+    // The next socket must read the credentials saved by the previous socket.
+    await this.waitForCredentialWrites(tenantId);
+    if (this.sockets.has(tenantId)) return this.getSession(tenantId);
 
     let starting = this.starts.get(tenantId);
     if (!starting) {
@@ -203,6 +210,8 @@ export class BaileysWhatsappSessionsService implements OnModuleInit, OnModuleDes
       }
     }
 
+    // An earlier creds.update must not recreate auth documents after logout.
+    await this.waitForCredentialWrites(tenantId);
     await this.deleteAuthState(tenantId);
     await this.upsertSessionAndNotify(tenantId, {
       status: WhatsappSessionStatus.DISCONNECTED,
@@ -237,6 +246,7 @@ export class BaileysWhatsappSessionsService implements OnModuleInit, OnModuleDes
       }
     }
 
+    await this.waitForCredentialWrites(tenantId);
     const tenantObjectId = new Types.ObjectId(tenantId);
     await Promise.all([
       this.sessionModel.deleteOne({ tenantId: tenantObjectId }),
@@ -420,11 +430,19 @@ export class BaileysWhatsappSessionsService implements OnModuleInit, OnModuleDes
     baileys: BaileysModule,
   ) {
     socket.ev.on('creds.update', () => {
-      void saveCreds().catch((error) =>
+      if (this.sockets.get(tenantId) !== socket) return;
+      const previous = this.credentialWrites.get(tenantId) || Promise.resolve();
+      const next = previous.catch(() => undefined).then(() => saveCreds());
+      this.credentialWrites.set(tenantId, next);
+      void next.catch((error) =>
         this.logger.error(
           `Failed to persist Baileys credentials for ${tenantId}: ${error instanceof Error ? error.message : 'unknown'}`,
         ),
-      );
+      ).finally(() => {
+        if (this.credentialWrites.get(tenantId) === next) {
+          this.credentialWrites.delete(tenantId);
+        }
+      });
     });
     socket.ev.on('connection.update', (update: any) => {
       void this.handleConnectionUpdate(tenantId, socket, update, baileys);
@@ -443,8 +461,13 @@ export class BaileysWhatsappSessionsService implements OnModuleInit, OnModuleDes
     update: any,
     baileys: BaileysModule,
   ) {
+    // Ignore late events from a socket already replaced by a newer connection.
+    if (this.sockets.get(tenantId) !== socket || this.manualStops.has(tenantId) || this.shuttingDown) {
+      return;
+    }
     if (update.qr) {
       const qrDataUrl = await QRCode.toDataURL(update.qr, { margin: 1, width: 320 });
+      if (this.sockets.get(tenantId) !== socket) return;
       await this.upsertSessionAndNotify(tenantId, {
         status: WhatsappSessionStatus.QR_READY,
         qrDataUrl,
@@ -471,6 +494,7 @@ export class BaileysWhatsappSessionsService implements OnModuleInit, OnModuleDes
     }
 
     if (update.connection !== 'close') return;
+    if (this.sockets.get(tenantId) !== socket) return;
     this.sockets.delete(tenantId);
     const statusCode = this.extractDisconnectStatus(update.lastDisconnect?.error);
     const loggedOut = statusCode === baileys.DisconnectReason?.loggedOut;
@@ -485,6 +509,9 @@ export class BaileysWhatsappSessionsService implements OnModuleInit, OnModuleDes
       lastActivityAt: new Date(),
     });
 
+    // On 515 Baileys requires a brand-new socket with the *updated* auth
+    // state. Wait for the queued MongoDB credential writes before restarting.
+    await this.waitForCredentialWrites(tenantId);
     if (loggedOut) {
       await this.deleteAuthState(tenantId);
       this.logger.warn(`WhatsApp logged out tenant ${tenantId}; a fresh QR scan is required`);
@@ -697,7 +724,11 @@ export class BaileysWhatsappSessionsService implements OnModuleInit, OnModuleDes
   private scheduleReconnect(tenantId: string, reason: string) {
     if (this.reconnectTimers.has(tenantId) || this.manualStops.has(tenantId)) return;
     const attempt = this.reconnectAttempts.get(tenantId) || 0;
-    const wait = RECONNECT_DELAYS_MS[Math.min(attempt, RECONNECT_DELAYS_MS.length - 1)];
+    // The first 515 after QR pairing is the normal restartRequired handshake;
+    // reconnect promptly, then back off if it repeats to avoid a tight loop.
+    const wait = reason === 'BAILEYS_515' && attempt === 0
+      ? 350
+      : RECONNECT_DELAYS_MS[Math.min(attempt, RECONNECT_DELAYS_MS.length - 1)];
     this.reconnectAttempts.set(tenantId, attempt + 1);
     this.logger.warn(
       `Scheduling Baileys reconnect for ${tenantId} in ${Math.round(wait / 1000)}s (${reason})`,
@@ -713,6 +744,18 @@ export class BaileysWhatsappSessionsService implements OnModuleInit, OnModuleDes
     }, wait);
     timer.unref?.();
     this.reconnectTimers.set(tenantId, timer);
+  }
+
+  private async waitForCredentialWrites(tenantId: string) {
+    const pending = this.credentialWrites.get(tenantId);
+    if (!pending) return;
+    try {
+      await pending;
+    } catch (error) {
+      this.logger.warn(
+        `Baileys credential save did not complete for ${tenantId}: ${error instanceof Error ? error.message : 'unknown'}`,
+      );
+    }
   }
 
   private async loadAuthState(tenantId: string, baileys: BaileysModule) {
