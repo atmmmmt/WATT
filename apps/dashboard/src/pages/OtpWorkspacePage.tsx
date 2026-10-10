@@ -103,6 +103,44 @@ export function OtpWorkspacePage() {
     load().catch((error) => console.error(error));
   }, [token]);
 
+  // /tenants intentionally omits qrDataUrl. Poll the authorized session endpoint
+  // so the real QR appears as soon as whatsapp-web.js has generated it.
+  const liveTenantId = tenant?.id || tenant?._id;
+  const liveSessionStatus = tenant?.whatsappSession?.status;
+  useEffect(() => {
+    if (!token || !liveTenantId) return;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const sessionInProgress = ['initializing', 'qr_ready', 'authenticated'].includes(liveSessionStatus || '');
+    const refreshInterval = sessionInProgress ? 1500 : 12000;
+
+    async function pollSession() {
+      try {
+        const session = await apiRequest<TenantRow['whatsappSession']>(
+          `/whatsapp-sessions/${liveTenantId}`, {}, token!,
+        );
+        if (!cancelled) {
+          setTenant(current =>
+            current && (current.id || current._id) === liveTenantId
+              ? { ...current, whatsappSession: session }
+              : current,
+          );
+        }
+      } catch (error) {
+        // A temporary network failure must not stop QR polling.
+        console.warn('[VAYRO] WhatsApp session refresh failed', error);
+      } finally {
+        if (!cancelled) timer = setTimeout(pollSession, refreshInterval);
+      }
+    }
+
+    timer = setTimeout(pollSession, 250);
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [token, liveTenantId, liveSessionStatus]);
+
   async function refreshSession() {
     if (!token || !tenant) return;
     setBusy('refresh');
@@ -120,6 +158,10 @@ export function OtpWorkspacePage() {
 
   async function startQr() {
     if (!token) return;
+    if (tenant?.whatsappSession?.status === 'ready') {
+      setNotice('واتساب متصل بالفعل، يمكنك تجربة إرسال OTP مباشرة');
+      return;
+    }
     setBusy('start');
     try {
       const session = await apiRequest<any>(
@@ -283,7 +325,7 @@ export function OtpWorkspacePage() {
               ) : (
                 <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
                   <QrCode size={54} style={{ marginBottom: '0.75rem' }} />
-                  <div>ابدأ جلسة QR ليظهر الرمز هنا</div>
+                  <div>{sessionStatus === 'initializing' || sessionStatus === 'authenticated' ? 'جاري تجهيز واتساب، سيظهر QR تلقائياً فور توليده' : sessionStatus === 'ready' ? 'واتساب متصل وجاهز للإرسال' : 'ابدأ جلسة QR ليظهر الرمز هنا'}</div>
                 </div>
               )}
             </div>
